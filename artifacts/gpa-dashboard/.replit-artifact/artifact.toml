@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "KMA GPA Dashboard"
+description = "A GPA and grade tracking dashboard for ACTVN students. Lets a student pull their exam scores from the school's training portal (via a pasted session cookie) or work offline with sample data, automatically computes weighted GPA on both the 10-point and 4-point scales per semester and overall, lets them add planned/custom subjects from the curriculum catalog with autocomplete, edit any grade inline, and plan what average score they still need to hit a target GPA."
+version = "1.0.0"
+id = "artifacts/gpa-dashboard"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 24688
+
+[services.development]
+run = "pnpm --filter @workspace/gpa-dashboard run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/gpa-dashboard", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/gpa-dashboard/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "24688"
+BASE_PATH = "/"

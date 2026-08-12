@@ -1,0 +1,1046 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KMA GPA Dashboard - Trình Quản Lý & Tính Điểm Tích Lũy</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Tailwind CSS (Tailwind CSS v2.2.19 via CDN as standard framework utility) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Plus Jakarta Sans', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#f5f3ff',
+                            100: '#ede9fe',
+                            200: '#ddd6fe',
+                            300: '#c4b5fd',
+                            400: '#a78bfa',
+                            500: '#8b5cf6',
+                            600: '#7c3aed',
+                            700: '#6d28d9',
+                            800: '#5b21b6',
+                            900: '#4c1d95',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #0b0f19;
+            color: #f3f4f6;
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(139, 92, 246, 0.15) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(20, 184, 166, 0.15) 0px, transparent 50%);
+            background-attachment: fixed;
+        }
+        .glass-card {
+            background: rgba(17, 24, 39, 0.7);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+        }
+        .glass-card-glow {
+            box-shadow: 0 0 25px -5px rgba(139, 92, 246, 0.2);
+        }
+        .input-glow:focus {
+            box-shadow: 0 0 10px 1px rgba(139, 92, 246, 0.4);
+            border-color: rgba(139, 92, 246, 0.5);
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(17, 24, 39, 0.5);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(139, 92, 246, 0.3);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(139, 92, 246, 0.5);
+        }
+    </style>
+</head>
+<body class="min-h-screen py-8 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-7xl mx-auto space-y-8">
+        
+        <!-- Header -->
+        <header class="flex flex-col xl:flex-row items-center justify-between gap-6 p-6 glass-card rounded-2xl glass-card-glow">
+            <div class="flex flex-col sm:flex-row items-center gap-4 text-center sm:text-left">
+                <div class="p-3 bg-brand-600/20 border border-brand-500/30 rounded-xl text-brand-400 shadow-lg shadow-brand-600/10">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-8 h-8">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4.26 10.147a60.438 60.438 0 0 0-.491 6.347A48.62 48.62 0 0 1 12 20.904a48.62 48.62 0 0 1 8.232-4.41 60.46 60.46 0 0 0-.491-6.347m-15.482 0a50.57 50.57 0 0 0-2.658-.813A59.906 59.906 0 0 1 12 3.493a59.903 59.903 0 0 1 10.399 5.84a50.58 50.58 0 0 0-2.658.814m-15.482 0A50.717 50.717 0 0 1 12 13.489a50.702 50.702 0 0 A12 10.147m-15.482 0" />
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-brand-400 to-teal-400">KMA GPA DASHBOARD</h1>
+                    <p class="text-sm text-gray-400 mt-1">Trình lập kế hoạch học tập, giả lập điểm thi & tính GPA chuẩn xác cho SV ACTVN</p>
+                </div>
+            </div>
+            
+            <div class="flex flex-col sm:flex-row items-center gap-4 w-full xl:w-auto justify-end">
+                <!-- User Profile Widget (Moved from sidebar to top header) -->
+                <div class="flex items-center gap-3 bg-gray-950/50 border border-gray-800 rounded-xl p-2.5 min-w-[240px] max-w-sm shadow-inner backdrop-blur-md relative overflow-hidden group hover:border-gray-700/80 transition-all duration-300" id="user-profile-widget">
+                    <div class="absolute inset-0 bg-gradient-to-r from-brand-500/5 to-teal-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-0"></div>
+                    <div class="w-10 h-10 rounded-lg bg-gray-900 border border-gray-800 flex items-center justify-center text-gray-400 font-bold shadow-sm relative shrink-0 z-10 transition-transform duration-300 group-hover:scale-105">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
+                        </svg>
+                        <span id="conn-dot" class="absolute bottom-0 right-0 w-2.5 h-2.5 bg-gray-500 border-2 border-gray-950 rounded-full animate-pulse-slow"></span>
+                    </div>
+                    <div class="flex flex-col justify-center min-w-0 z-10 flex-grow text-left">
+                        <div class="flex items-center gap-1.5 justify-between">
+                            <span class="text-xs font-bold text-white truncate max-w-[120px]" id="profile-name">Chưa đăng nhập</span>
+                            <span id="conn-badge" class="text-[8px] px-1 py-0.5 rounded font-extrabold uppercase tracking-wide shrink-0 bg-gray-850 text-gray-400 border border-gray-700">WAITING...</span>
+                        </div>
+                        <div class="flex justify-between items-center mt-1">
+                            <span class="text-[10px] text-brand-400 font-mono" id="profile-id">ID: Trống</span>
+                            <span class="text-[9px] text-gray-500 truncate max-w-[120px]" id="profile-email">Offline Mode</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-2 shrink-0">
+                    <button onclick="refreshDataFromServer()" class="flex items-center gap-2 px-4 py-2 bg-brand-600 hover:bg-brand-500 text-white rounded-xl text-sm font-semibold transition-all duration-300 shadow-lg shadow-brand-600/20 active:scale-95">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4 animate-spin-slow">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" />
+                        </svg>
+                        Tải lại điểm từ web
+                    </button>
+                    <button onclick="resetToOriginalCrawl()" class="flex items-center gap-2 px-4 py-2 bg-gray-800 hover:bg-gray-700 text-gray-300 rounded-xl text-sm font-semibold border border-gray-700 transition-all duration-300 active:scale-95">
+                        Khôi phục gốc
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Stats Overview -->
+        <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <!-- GPA 10 -->
+            <div class="p-6 glass-card rounded-2xl flex items-center justify-between shadow-lg shadow-brand-500/5 border border-brand-500/10">
+                <div class="space-y-2">
+                    <p class="text-sm font-medium text-gray-400">GPA Tích Lũy (Hệ 10)</p>
+                    <p id="total-gpa-10" class="text-4xl font-extrabold text-brand-400">0.00</p>
+                </div>
+                <div class="w-16 h-16 rounded-2xl bg-brand-500/10 flex items-center justify-center text-brand-400 border border-brand-500/20">
+                    <span class="text-xl font-bold">/10</span>
+                </div>
+            </div>
+
+            <!-- GPA 4 -->
+            <div class="p-6 glass-card rounded-2xl flex items-center justify-between shadow-lg shadow-teal-500/5 border border-teal-500/10">
+                <div class="space-y-2">
+                    <p class="text-sm font-medium text-gray-400">GPA Tích Lũy (Hệ 4)</p>
+                    <p id="total-gpa-4" class="text-4xl font-extrabold text-teal-400">0.00</p>
+                </div>
+                <div class="w-16 h-16 rounded-2xl bg-teal-500/10 flex items-center justify-center text-teal-400 border border-teal-500/20">
+                    <span class="text-xl font-bold">/4</span>
+                </div>
+            </div>
+
+            <!-- Total Credits -->
+            <div class="p-6 glass-card rounded-2xl flex items-center justify-between shadow-lg shadow-amber-500/5 border border-amber-500/10">
+                <div class="space-y-2">
+                    <p class="text-sm font-medium text-gray-400">Tín Chỉ Tích Lũy</p>
+                    <p id="total-credits" class="text-4xl font-extrabold text-amber-400">0</p>
+                </div>
+                <div class="w-16 h-16 rounded-2xl bg-amber-500/10 flex items-center justify-center text-amber-400 border border-amber-500/20">
+                    <span class="text-sm font-bold">Tín Chỉ</span>
+                </div>
+            </div>
+
+            <!-- Classification -->
+            <div class="p-6 glass-card rounded-2xl flex items-center justify-between shadow-lg shadow-rose-500/5 border border-rose-500/10">
+                <div class="space-y-2">
+                    <p class="text-sm font-medium text-gray-400">Xếp Loại Học Tập</p>
+                    <p id="gpa-rank" class="text-3xl font-extrabold text-rose-400">Khá</p>
+                </div>
+                <div class="w-16 h-16 rounded-2xl bg-rose-500/10 flex items-center justify-center text-rose-400 border border-rose-500/20">
+                    <span id="rank-emoji" class="text-2xl">🏆</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Dynamic Content Controller -->
+        <main class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            
+            <!-- Side Panel (Tools & Quick Actions) -->
+            <div class="lg:col-span-1 space-y-8">
+                <!-- Add Custom Subject Card -->
+                <div class="p-6 glass-card rounded-2xl border border-gray-800">
+                    <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5 text-brand-400">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                        </svg>
+                        Thêm Môn Học Mới
+                    </h3>
+                    <form id="add-subject-form" class="space-y-4" onsubmit="handleAddSubject(event)">
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Học Kỳ</label>
+                            <select id="add-sem" class="w-full bg-gray-900 border border-gray-800 rounded-xl px-4 py-2.5 text-gray-200 focus:outline-none input-glow transition-all duration-300" required>
+                                <!-- Populate sem selections dynamically -->
+                            </select>
+                        </div>
+                        <div class="relative">
+                            <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Tên Môn Học</label>
+                            <input type="text" id="add-name" autocomplete="off" placeholder="Nhập tên môn học (ví dụ: Giải tích)..." class="w-full bg-gray-900 border border-gray-800 rounded-xl px-4 py-2.5 text-gray-200 focus:outline-none input-glow transition-all duration-300" required>
+                            <div id="subject-autocomplete" class="hidden absolute left-0 right-0 max-h-60 overflow-y-auto mt-1 rounded-xl bg-gray-950 border border-gray-800 shadow-2xl z-50 divide-y divide-gray-800/60 backdrop-blur-xl">
+                                <!-- Autocomplete items will be rendered here -->
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Mã Học Phần</label>
+                                <input type="text" id="add-code" placeholder="Tự điền..." class="w-full bg-gray-950/80 border border-gray-800 text-gray-400 rounded-xl px-4 py-2.5 text-xs font-mono focus:outline-none cursor-not-allowed" readonly>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Số Tín Chỉ</label>
+                                <input type="number" id="add-credits" placeholder="Tự điền..." class="w-full bg-gray-950/80 border border-gray-800 text-gray-400 rounded-xl px-4 py-2.5 text-xs font-medium focus:outline-none cursor-not-allowed" readonly>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Điểm Thi (10)</label>
+                                <input type="number" step="0.1" id="add-exam" min="0" max="10" placeholder="-" class="w-full bg-gray-900 border border-gray-800 rounded-xl px-4 py-2.5 text-gray-200 focus:outline-none input-glow transition-all duration-300">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Điểm HP (10)</label>
+                                <input type="number" step="0.1" id="add-course" min="0" max="10" placeholder="-" class="w-full bg-gray-900 border border-gray-800 rounded-xl px-4 py-2.5 text-gray-200 focus:outline-none input-glow transition-all duration-300">
+                            </div>
+                        </div>
+                        <button type="submit" class="w-full py-3 bg-brand-600 hover:bg-brand-500 text-white font-bold rounded-xl shadow-lg shadow-brand-600/20 transition-all duration-300 active:scale-[0.98] mt-2">
+                            Thêm môn học
+                        </button>
+                    </form>
+                </div>
+
+                <!-- GPA Goal Planner Card -->
+                <div class="p-6 glass-card rounded-2xl border border-gray-800">
+                    <h3 class="text-lg font-bold text-white mb-3 flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5 text-teal-400">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 0 1-1.043 3.296 3.745 3.745 0 0 1-3.296 1.043A3.745 3.745 0 0 1 12 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 0 1-3.296-1.043 3.745 3.745 0 0 1-1.043-3.296A3.745 3.745 0 0 1 3 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 0 1 1.043-3.296 3.746 3.746 0 0 1 3.296-1.043A3.746 3.746 0 0 1 12 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 0 1 3.296 1.043 3.746 3.746 0 0 1 1.043 3.296A3.745 3.745 0 0 1 21 12Z" />
+                    </svg>
+                        Đặt Mục Tiêu GPA
+                    </h3>
+                    <div class="space-y-4">
+                        <p class="text-xs text-gray-400">Tính toán số điểm trung bình học thuật bạn cần đạt ở các môn còn lại để đạt GPA mục tiêu.</p>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">GPA Hệ 4 Mục Tiêu</label>
+                            <div class="flex gap-2">
+                                <input type="number" id="target-gpa" step="0.05" min="2.0" max="4.0" value="3.2" class="w-full bg-gray-900 border border-gray-800 rounded-xl px-4 py-2 text-gray-200 focus:outline-none input-glow transition-all duration-300">
+                                <button onclick="calculateGoal()" class="px-4 py-2 bg-teal-600 hover:bg-teal-500 text-white font-semibold rounded-xl text-sm transition-all duration-300 active:scale-95">Tính</button>
+                            </div>
+                        </div>
+                        <div id="goal-result" class="hidden p-4 rounded-xl bg-teal-500/10 border border-teal-500/20 text-teal-300 text-sm space-y-2">
+                            <!-- Goal results filled dynamically -->
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Cookie Config Card -->
+                <div class="p-6 glass-card rounded-2xl border border-gray-800 space-y-4">
+                    <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5 text-indigo-400">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
+                        </svg>
+                        Đăng Nhập Cổng Đào Tạo
+                    </h3>
+                    <div class="space-y-3">
+                        <p class="text-xs text-gray-400">Nhập Cookie, Session ID hoặc dán trực tiếp lệnh <strong>cURL</strong> (lấy từ tab Network) để đồng bộ.</p>
+                        <div>
+                            <textarea id="cookie-input" rows="2" placeholder="Dán cookie (ví dụ: cc70e48e...=s3g1t...) hoặc dán cả lệnh cURL..." class="w-full bg-gray-900 border border-gray-800 rounded-xl px-3 py-2 text-xs text-gray-300 focus:outline-none input-glow transition-all duration-300 resize-none font-mono"></textarea>
+                        </div>
+                        <div id="cookie-validation-msg" class="text-[11px] font-medium hidden">
+                            <!-- Validation message -->
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="saveCookie()" class="w-full py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-xl shadow-lg transition-all duration-300 active:scale-95">
+                                Lưu Cookie
+                            </button>
+                            <button onclick="clearCookie()" class="px-3 py-2 bg-gray-800 hover:bg-gray-700 text-gray-400 text-xs font-semibold rounded-xl border border-gray-700 transition-all duration-300 active:scale-95">
+                                Xoá
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+
+            </div>
+
+            <!-- Semesters List Panel (Dynamic grid of semesters and subject tables) -->
+            <div class="lg:col-span-2 space-y-8" id="semesters-container">
+                <!-- Loaded dynamically -->
+            </div>
+            
+        </main>
+    </div>
+
+    <!-- UI Scripts -->
+    <script>
+        let dbGrades = [];
+        let gpaScale = {};
+        let originalGrades = [];
+        let allSubjectsDb = [];
+
+        function removeVietnameseTones(str) {
+            if (!str) return '';
+            str = str.replace(/à|á|ạ|ả|ã|â|ầ|ấ|ậ|ẩ|ẫ|ă|ằ|ắ|ặ|ẳ|ẵ/g, "a");
+            str = str.replace(/è|é|ẹ|ẻ|ẽ|ê|ề|ế|ệ|ể|ễ/g, "e");
+            str = str.replace(/ì|í|ị|ỉ|ĩ/g, "i");
+            str = str.replace(/ò|ó|ọ|ỏ|õ|ô|ồ|ố|ộ|ổ|ỗ|ơ|ờ|ớ|ợ|ở|ỡ/g, "o");
+            str = str.replace(/ù|ú|ụ|ủ|ũ|ư|ừ|ứ|ự|ử|ữ/g, "u");
+            str = str.replace(/ỳ|ý|ỵ|ỷ|ỹ/g, "y");
+            str = str.replace(/đ/g, "d");
+            str = str.replace(/À|Á|Ạ|Ả|Ã|Â|Ầ|Ấ|Ậ|Ẩ|Ẫ|Ă|Ằ|Ắ|Ặ|Ẳ|Ẵ/g, "A");
+            str = str.replace(/È|É|Ẹ|Ẻ|Ẽ|Ê|Ề|Ế|Ệ|Ể|Ễ/g, "E");
+            str = str.replace(/Ì|Í|Ị|Ỉ|Ĩ/g, "I");
+            str = str.replace(/Ò|Ó|Ọ|Ỏ|Õ|Ô|Ồ|Ố|Ộ|Ổ|Ỗ|Ơ|Ờ|Ớ|Ợ|Ở|Ỡ/g, "O");
+            str = str.replace(/Ù|Ú|Ụ|Ủ|U|Ư|Ừ|Ứ|Ự|Ử|Ữ/g, "U");
+            str = str.replace(/Ỳ|Ý|Ỵ|Ỷ|Ỹ/g, "Y");
+            str = str.replace(/Đ/g, "D");
+            // Some system encode markers
+            str = str.replace(/\u0300|\u0301|\u0309|\u0303|\u0323/g, ""); // Huyền sắc hỏi ngã nặng
+            str = str.replace(/\u02C6|\u0306|\u031B/g, ""); // Â, Ă, Ơ, Ư
+            return str;
+        }
+
+        // Dynamic naming conversion helper
+        function normaliseSemName(year, term) {
+            return `Năm học ${year} - Học kỳ ${term}`;
+        }
+
+        // Standard dynamic GPA letter mapping from KMA scale
+        function getLetterRating(courseGrade) {
+            const grade = parseFloat(courseGrade);
+            if (isNaN(grade)) return { letter: '-', gpa4: 0, color: 'text-gray-400' };
+            if (grade >= 9.0) return { letter: 'A+', gpa4: 4.0, color: 'text-emerald-400 font-semibold' };
+            if (grade >= 8.5) return { letter: 'A', gpa4: 3.8, color: 'text-emerald-400' };
+            if (grade >= 7.8) return { letter: 'B+', gpa4: 3.5, color: 'text-blue-400' };
+            if (grade >= 7.0) return { letter: 'B', gpa4: 3.0, color: 'text-blue-500' };
+            if (grade >= 6.3) return { letter: 'C+', gpa4: 2.4, color: 'text-amber-400' };
+            if (grade >= 5.5) return { letter: 'C', gpa4: 2.0, color: 'text-yellow-500' };
+            if (grade >= 4.8) return { letter: 'D+', gpa4: 1.5, color: 'text-orange-400' };
+            if (grade >= 4.0) return { letter: 'D', gpa4: 1.0, color: 'text-orange-500' };
+            return { letter: 'F', gpa4: 0.0, color: 'text-red-500 font-bold' };
+        }
+
+        // Calculate and re-render everything
+        function updateDashboardCalculations() {
+            let totalWeightedGrade10 = 0.0;
+            let totalWeightedGrade4 = 0.0;
+            let totalCredits = 0;
+            let gradedCount = 0;
+            
+            // Build groups
+            const semGroups = {};
+            dbGrades.forEach(g => {
+                const key = `${g.year}_${g.term}`;
+                if (!semGroups[key]) {
+                    semGroups[key] = [];
+                }
+                semGroups[key].push(g);
+            });
+
+            // Re-render semesters list
+            const container = document.getElementById('semesters-container');
+            container.innerHTML = '';
+            
+            // Collect existing sems for add selection
+            const addSemSelect = document.getElementById('add-sem');
+            const currentSemKeys = Object.keys(semGroups).sort();
+            addSemSelect.innerHTML = '';
+            currentSemKeys.forEach(k => {
+                const parts = k.split('_');
+                const opt = document.createElement('option');
+                opt.value = k;
+                opt.textContent = `${parts[0]} - Kỳ ${parts[1]}`;
+                addSemSelect.appendChild(opt);
+            });
+            
+            // Also append options for next academic years/terms so they can plan ahead!
+            const futureSems = [
+                "2025-2026_1", "2025-2026_2", "2026-2027_1", "2026-2027_2", "2027-2028_1", "2027-2028_2"
+            ];
+            futureSems.forEach(f => {
+                if (!currentSemKeys.includes(f)) {
+                    const parts = f.split('_');
+                    const opt = document.createElement('option');
+                    opt.value = f;
+                    opt.textContent = `${parts[0]} - Kỳ ${parts[1]} (Kế hoạch)`;
+                    addSemSelect.appendChild(opt);
+                }
+            });
+
+            // Sort semester keys for rendering (reversed to show latest first)
+            currentSemKeys.reverse().forEach(key => {
+                const subjects = semGroups[key];
+                const parts = key.split('_');
+                const year = parts[0];
+                const term = parts[1];
+
+                // Compute sem gpa
+                let semWGrade10 = 0.0;
+                let semWGrade4 = 0.0;
+                let semCredits = 0;
+                
+                subjects.forEach(s => {
+                    const isGdtc = s.subject.toLowerCase().includes('thể chất');
+                    const hasGrade = s.course !== '-' && s.course !== '';
+                    const cred = parseInt(s.credits) || 0;
+                    
+                    if (hasGrade && !isGdtc) {
+                        const val10 = parseFloat(s.course);
+                        if (!isNaN(val10)) {
+                            const val4 = getLetterRating(val10).gpa4;
+                            semWGrade10 += val10 * cred;
+                            semWGrade4 += val4 * cred;
+                            semCredits += cred;
+                            
+                            totalWeightedGrade10 += val10 * cred;
+                            totalWeightedGrade4 += val4 * cred;
+                            totalCredits += cred;
+                            gradedCount++;
+                        }
+                    }
+                });
+
+                const semGpa10 = semCredits > 0 ? (semWGrade10 / semCredits) : 0;
+                const semGpa4 = semCredits > 0 ? (semWGrade4 / semCredits) : 0;
+
+                // Render semester block
+                const semCard = document.createElement('div');
+                semCard.className = 'glass-card rounded-2xl border border-gray-800 overflow-hidden';
+                
+                let tbodyRowsHtml = '';
+                subjects.forEach((s, idx) => {
+                    const rating = getLetterRating(s.course);
+                    const isGdtc = s.subject.toLowerCase().includes('thể chất');
+                    const displayLetter = rating.letter;
+                    
+                    tbodyRowsHtml += `
+                        <tr class="hover:bg-gray-800/30 border-b border-gray-800/50 transition-colors">
+                            <td class="px-4 py-3 text-center text-xs text-gray-500">${idx + 1}</td>
+                            <td class="px-4 py-3">
+                                <input type="text" value="${s.code}" onchange="updateSubjectField('${s.stt}', 'code', this.value)" class="bg-transparent border border-transparent hover:border-gray-700/50 focus:border-brand-500/50 px-1 py-0.5 rounded text-center w-16 text-xs text-yellow-400 font-mono focus:outline-none">
+                            </td>
+                            <td class="px-4 py-3">
+                                <input type="text" value="${s.subject}" onchange="updateSubjectField('${s.stt}', 'subject', this.value)" class="bg-transparent border border-transparent hover:border-gray-700/50 focus:border-brand-500/50 px-1 py-0.5 rounded w-full text-xs text-gray-200 font-medium focus:outline-none">
+                                ${isGdtc ? '<span class="ml-1 text-[9px] px-1 py-0.2 bg-gray-800 text-gray-400 rounded">Không tính GPA</span>' : ''}
+                            </td>
+                            <td class="px-4 py-3 text-center">
+                                <input type="number" value="${s.credits}" min="1" max="10" onchange="updateSubjectField('${s.stt}', 'credits', this.value)" class="bg-transparent border border-transparent hover:border-gray-700/50 focus:border-brand-500/50 px-1 py-0.5 rounded text-center w-10 text-xs text-cyan-400 focus:outline-none">
+                            </td>
+                            <td class="px-4 py-3 text-center">
+                                <input type="text" value="${s.tp1}" onchange="updateSubjectField('${s.stt}', 'tp1', this.value)" class="bg-transparent border border-transparent hover:border-gray-700/50 focus:border-brand-500/50 px-1 py-0.5 rounded text-center w-10 text-xs text-gray-400 focus:outline-none">
+                            </td>
+                            <td class="px-4 py-3 text-center">
+                                <input type="text" value="${s.tp2}" onchange="updateSubjectField('${s.stt}', 'tp2', this.value)" class="bg-transparent border border-transparent hover:border-gray-700/50 focus:border-brand-500/50 px-1 py-0.5 rounded text-center w-10 text-xs text-gray-400 focus:outline-none">
+                            </td>
+                            <td class="px-4 py-3 text-center">
+                                <input type="text" value="${s.dqt}" onchange="updateSubjectField('${s.stt}', 'dqt', this.value)" class="bg-transparent border border-transparent hover:border-gray-700/50 focus:border-brand-500/50 px-1 py-0.5 rounded text-center w-10 text-xs text-gray-400 focus:outline-none">
+                            </td>
+                            <td class="px-4 py-3 text-center">
+                                <input type="text" value="${s.exam}" onchange="updateSubjectField('${s.stt}', 'exam', this.value)" class="bg-transparent border border-transparent hover:border-gray-700/50 focus:border-brand-500/50 px-1 py-0.5 rounded text-center w-10 text-xs text-yellow-500 font-medium focus:outline-none">
+                            </td>
+                            <td class="px-4 py-3 text-center">
+                                <input type="text" value="${s.course}" onchange="updateSubjectField('${s.stt}', 'course', this.value)" class="bg-transparent border border-transparent hover:border-gray-700/50 focus:border-brand-500/50 px-1 py-0.5 rounded text-center w-10 text-xs text-rose-500 font-bold focus:outline-none">
+                            </td>
+                            <td class="px-4 py-3 text-center text-xs ${rating.color}">
+                                ${displayLetter}
+                            </td>
+                            <td class="px-4 py-3 text-center">
+                                <button onclick="deleteSubject('${s.stt}')" class="text-gray-500 hover:text-red-400 transition-colors p-1 rounded">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+                                    </svg>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                });
+
+                semCard.innerHTML = `
+                    <div class="px-6 py-4 bg-gray-900 flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-gray-800 gap-4">
+                        <div>
+                            <h4 class="text-base font-bold text-white">${normaliseSemName(year, term)}</h4>
+                            <p class="text-xs text-gray-400 mt-0.5">Số môn học: ${subjects.length} | Tín chỉ đăng ký: ${semCredits}</p>
+                        </div>
+                        <div class="flex flex-wrap gap-2">
+                            <span class="px-2.5 py-1 text-xs rounded-lg font-bold bg-brand-500/10 text-brand-400 border border-brand-500/20">GPA (10): ${semGpa10.toFixed(2)}</span>
+                            <span class="px-2.5 py-1 text-xs rounded-lg font-bold bg-teal-500/10 text-teal-400 border border-teal-500/20">GPA (4): ${semGpa4.toFixed(2)}</span>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-800 text-left">
+                            <thead class="bg-gray-950 text-gray-400 text-[10px] uppercase font-bold tracking-wider">
+                                <tr>
+                                    <th class="px-4 py-2.5 text-center">STT</th>
+                                    <th class="px-4 py-2.5 text-center">Mã HP</th>
+                                    <th class="px-4 py-2.5">Tên Môn Học</th>
+                                    <th class="px-4 py-2.5 text-center">Số TC</th>
+                                    <th class="px-4 py-2.5 text-center">TP1</th>
+                                    <th class="px-4 py-2.5 text-center">TP2</th>
+                                    <th class="px-4 py-2.5 text-center">ĐQT</th>
+                                    <th class="px-4 py-2.5 text-center">Thi</th>
+                                    <th class="px-4 py-2.5 text-center">Tổng kết</th>
+                                    <th class="px-4 py-2.5 text-center">Điểm chữ</th>
+                                    <th class="px-4 py-2.5 text-center"></th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-800/40">
+                                ${tbodyRowsHtml}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+                container.appendChild(semCard);
+            });
+
+            // Update globally aggregated values
+            const overallGpa10 = totalCredits > 0 ? (totalWeightedGrade10 / totalCredits) : 0;
+            const overallGpa4 = totalCredits > 0 ? (totalWeightedGrade4 / totalCredits) : 0;
+
+            document.getElementById('total-gpa-10').textContent = overallGpa10.toFixed(2);
+            document.getElementById('total-gpa-4').textContent = overallGpa4.toFixed(2);
+            document.getElementById('total-credits').textContent = totalCredits;
+
+            // Xếp loại học lực
+            let rank = 'Trung bình';
+            let emoji = '📚';
+            let rankColor = 'text-yellow-400';
+            if (overallGpa4 >= 3.6) { rank = 'Xuất Sắc'; emoji = '👑'; rankColor = 'text-purple-400'; }
+            else if (overallGpa4 >= 3.2) { rank = 'Giỏi'; emoji = '💎'; rankColor = 'text-emerald-400'; }
+            else if (overallGpa4 >= 2.5) { rank = 'Khá'; emoji = '🏆'; rankColor = 'text-blue-400'; }
+            
+            const rankLabel = document.getElementById('gpa-rank');
+            rankLabel.textContent = rank;
+            rankLabel.className = `text-3xl font-extrabold ${rankColor}`;
+            document.getElementById('rank-emoji').textContent = emoji;
+
+            // Save to localStorage
+            localStorage.setItem('kma_grades_db', JSON.stringify(dbGrades));
+        }
+
+        // Change single cell inside tables
+        function updateSubjectField(stt, field, val) {
+            const courseIdx = dbGrades.findIndex(c => c.stt === stt);
+            if (courseIdx !== -1) {
+                dbGrades[courseIdx][field] = val;
+                
+                // If course grade (Điểm HP) was explicitly updated or calculated from components
+                if (field === 'course') {
+                    // Normalize to float and update letter grade automatically
+                    const floatGrade = parseFloat(val);
+                    if (!isNaN(floatGrade)) {
+                        dbGrades[courseIdx].letter = getLetterRating(floatGrade).letter;
+                    }
+                } else if (field === 'exam' || field === 'dqt' || field === 'tp1' || field === 'tp2') {
+                    // Try to autocalculate Điểm HP if possible from ĐQT (30%) & Thi (70%)
+                    const dqtVal = parseFloat(dbGrades[courseIdx].dqt || dbGrades[courseIdx].tp2);
+                    const examVal = parseFloat(dbGrades[courseIdx].exam);
+                    if (!isNaN(dqtVal) && !isNaN(examVal)) {
+                        const finalVal = (dqtVal * 0.3) + (examVal * 0.7);
+                        dbGrades[courseIdx].course = finalVal.toFixed(1);
+                        dbGrades[courseIdx].letter = getLetterRating(finalVal).letter;
+                    }
+                }
+                
+                updateDashboardCalculations();
+            }
+        }
+
+        // Delete subject
+        function deleteSubject(stt) {
+            dbGrades = dbGrades.filter(c => c.stt !== stt);
+            updateDashboardCalculations();
+        }
+
+        // Form callback
+        // Form callback
+        function handleAddSubject(event) {
+            event.preventDefault();
+            const nameVal = document.getElementById('add-name').value.trim();
+            
+            // Validate name is in allSubjectsDb (case-insensitive)
+            const matchedSubject = allSubjectsDb.find(s => s.name.toLowerCase() === nameVal.toLowerCase());
+            if (!matchedSubject) {
+                alert('Môn học này không hợp lệ hoặc không có trong danh sách curriculum! Vui lòng chọn môn học từ danh sách gợi ý.');
+                return;
+            }
+            
+            const semVal = document.getElementById('add-sem').value;
+            const codeVal = matchedSubject.code;
+            const creditsVal = matchedSubject.credits;
+            const examVal = document.getElementById('add-exam').value || '-';
+            const courseVal = document.getElementById('add-course').value || '-';
+            
+            const parts = semVal.split('_');
+            const year = parts[0];
+            const term = parts[1];
+
+            let letterVal = '-';
+            if (courseVal !== '-') {
+                letterVal = getLetterRating(courseVal).letter;
+            }
+
+            const newObj = {
+                stt: 'custom_' + Date.now(),
+                year: year,
+                term: term,
+                subject: matchedSubject.name,
+                code: codeVal.toUpperCase(),
+                credits: creditsVal,
+                attempt: '1',
+                tp1: '-',
+                tp2: '-',
+                dqt: '-',
+                exam: examVal,
+                course: courseVal,
+                letter: letterVal
+            };
+
+            dbGrades.push(newObj);
+            document.getElementById('add-subject-form').reset();
+            
+            // Clear helper fields
+            document.getElementById('add-code').value = '';
+            document.getElementById('add-credits').value = '';
+            
+            updateDashboardCalculations();
+        }
+
+        // Autocomplete search and display logic
+        document.addEventListener('DOMContentLoaded', () => {
+            const addNameInput = document.getElementById('add-name');
+            const addCodeInput = document.getElementById('add-code');
+            const addCreditsInput = document.getElementById('add-credits');
+            const autocompleteDiv = document.getElementById('subject-autocomplete');
+
+            function showAutocompleteMatches() {
+                const queryRaw = addNameInput.value;
+                const query = removeVietnameseTones(queryRaw.trim().toLowerCase());
+                
+                // Clear autocomplete
+                autocompleteDiv.innerHTML = '';
+                
+                // Filter matches
+                let matches = [];
+                if (!query) {
+                    matches = allSubjectsDb.slice(0, 15); // Show first 15 standard courses as recommendations when empty
+                } else {
+                    matches = allSubjectsDb.filter(s => {
+                        const nameTones = removeVietnameseTones(s.name.toLowerCase());
+                        const codeTones = removeVietnameseTones(s.code.toLowerCase());
+                        return nameTones.includes(query) || codeTones.includes(query);
+                    });
+                }
+                
+                if (matches.length === 0) {
+                    const noResult = document.createElement('div');
+                    noResult.className = 'px-4 py-3 text-xs text-gray-500 text-center';
+                    noResult.textContent = 'Không tìm thấy môn học nào khớp!';
+                    autocompleteDiv.appendChild(noResult);
+                } else {
+                    matches.forEach(s => {
+                        const item = document.createElement('div');
+                        item.className = 'px-4 py-2.5 hover:bg-brand-600/20 cursor-pointer transition-colors text-sm text-gray-200 flex justify-between items-center';
+                        item.innerHTML = `
+                            <div>
+                                <div class="font-medium text-white">${s.name}</div>
+                                <div class="text-[11px] text-gray-400 font-mono mt-0.5">${s.code}</div>
+                            </div>
+                            <div class="text-xs px-2 py-0.5 bg-cyan-950 text-cyan-400 border border-cyan-800 rounded font-bold">
+                                ${s.credits} TC
+                            </div>
+                        `;
+                        
+                        // Use mousedown to trigger action before input's blur hides the list
+                        item.addEventListener('mousedown', (e) => {
+                            e.preventDefault();
+                            selectSubject(s);
+                        });
+                        
+                        autocompleteDiv.appendChild(item);
+                    });
+                }
+                
+                autocompleteDiv.classList.remove('hidden');
+            }
+
+            function selectSubject(s) {
+                addNameInput.value = s.name;
+                addCodeInput.value = s.code;
+                addCreditsInput.value = s.credits;
+                autocompleteDiv.classList.add('hidden');
+            }
+
+            addNameInput.addEventListener('input', () => {
+                if (!addNameInput.value.trim()) {
+                    addCodeInput.value = '';
+                    addCreditsInput.value = '';
+                }
+                showAutocompleteMatches();
+            });
+
+            addNameInput.addEventListener('focus', showAutocompleteMatches);
+            
+            addNameInput.addEventListener('blur', () => {
+                setTimeout(() => {
+                    autocompleteDiv.classList.add('hidden');
+                }, 180);
+            });
+
+            // Cookie config initialization
+            const cookieInput = document.getElementById('cookie-input');
+            const cookieValMsg = document.getElementById('cookie-validation-msg');
+            
+            // Set initial value
+            const savedCookie = localStorage.getItem('kma_joomla_cookie');
+            if (savedCookie) {
+                cookieInput.value = savedCookie;
+                validateAndShowCookie(savedCookie);
+            }
+            
+            cookieInput.addEventListener('input', () => {
+                validateAndShowCookie(cookieInput.value);
+            });
+
+            function validateAndShowCookie(cookieStr) {
+                if (!cookieStr.trim()) {
+                    cookieValMsg.classList.add('hidden');
+                    return;
+                }
+                
+                const validation = validateCookieString(cookieStr);
+                cookieValMsg.classList.remove('hidden');
+                
+                if (validation.valid) {
+                    cookieValMsg.textContent = validation.message;
+                    cookieValMsg.className = "text-[11px] font-medium p-2.5 rounded-xl text-emerald-400 bg-emerald-500/10 border border-emerald-500/20";
+                } else {
+                    cookieValMsg.textContent = validation.message;
+                    cookieValMsg.className = "text-[11px] font-medium p-2.5 rounded-xl text-rose-400 bg-rose-500/10 border border-rose-500/20";
+                }
+            }
+        });
+
+        // Cookie validation and storage functions
+        function validateCookieString(cookieStr) {
+            if (!cookieStr) return { valid: false, message: "Cookie không được để trống", extracted: "", ua: "" };
+            
+            let str = cookieStr.trim();
+            let extractedUA = "";
+
+            // Hỗ trợ trích xuất từ lệnh cURL
+            if (str.startsWith("curl ") || str.includes("curl '") || str.includes('curl "')) {
+                let extractedCookie = "";
+                // Tìm header -H 'cookie: ...' hoặc flag -b '...'
+                const headerMatch = str.match(/-H\s+['"]cookie:\s*(.*?)['"]/i);
+                const bMatch = str.match(/-b\s+['"](.*?)['"]/i);
+                
+                // Tìm User-Agent để tránh bị server chặn do sai thiết bị
+                const uaMatch = str.match(/-H\s+['"]user-agent:\s*(.*?)['"]/i);
+                if (uaMatch) {
+                    extractedUA = uaMatch[1];
+                }
+                
+                if (headerMatch) {
+                    extractedCookie = headerMatch[1];
+                } else if (bMatch) {
+                    extractedCookie = bMatch[1];
+                }
+                
+                if (extractedCookie) {
+                    str = extractedCookie;
+                } else {
+                    return { valid: false, message: "Không tìm thấy cookie trong lệnh cURL đã dán", extracted: "", ua: "" };
+                }
+            }
+            
+            if (str.startsWith("Cookie:")) {
+                str = str.substring(7).trim();
+            }
+            
+            // Check if it's a 26-character session ID
+            if (/^[a-zA-Z0-9]{26}$/.test(str)) {
+                return { 
+                    valid: true, 
+                    type: "session_id", 
+                    message: "Hợp lệ: Định dạng Session ID (26 ký tự)",
+                    extracted: str,
+                    ua: extractedUA
+                };
+            }
+            
+            // Parse key-value pairs
+            const pairs = str.split(';');
+            let hasSessionHash = false;
+            let sessionHashKey = "";
+            
+            for (let pair of pairs) {
+                let currentPair = pair.trim();
+                if (currentPair.includes('=')) {
+                    const parts = currentPair.split('=');
+                    const key = parts[0].trim();
+                    const val = parts[1].trim();
+                    
+                    if (/^[a-f0-9]{32}$/i.test(key) && /^[a-zA-Z0-9]{26}$/.test(val)) {
+                        hasSessionHash = true;
+                        sessionHashKey = key;
+                    }
+                }
+            }
+            
+            if (hasSessionHash) {
+                return {
+                    valid: true,
+                    type: "full_cookie",
+                    message: `Hợp lệ: Tìm thấy Session Cookie (${sessionHashKey})`,
+                    extracted: str,
+                    ua: extractedUA
+                };
+            }
+            
+            return {
+                valid: false,
+                message: "Không đúng định dạng Joomla cookie (Cần chứa khoá hex 32 ký tự và giá trị 26 ký tự, hoặc chỉ chứa Session ID 26 ký tự)",
+                extracted: "",
+                ua: ""
+            };
+        }
+
+        function saveCookie() {
+            const cookieInput = document.getElementById('cookie-input');
+            const cookieStr = cookieInput.value.trim();
+            
+            if (!cookieStr) {
+                alert("Vui lòng nhập cookie!");
+                return;
+            }
+            
+            const validation = validateCookieString(cookieStr);
+            if (!validation.valid) {
+                alert("Định dạng cookie không hợp lệ! Vui lòng kiểm tra lại.");
+                return;
+            }
+            
+            // Save the extracted cookie (not the entire cURL string)
+            localStorage.setItem('kma_joomla_cookie', validation.extracted);
+            if (validation.ua) {
+                localStorage.setItem('kma_user_agent', validation.ua);
+            }
+            
+            // Update input box to show extracted cookie instead of long cURL string
+            if (cookieInput.value !== validation.extracted) {
+                cookieInput.value = validation.extracted;
+            }
+            
+            // Clear current cache to fetch fresh data from the portal
+            localStorage.removeItem('kma_grades_db');
+            
+            alert("Đã lưu cookie thành công! Hệ thống sẽ tự động tải lại điểm từ cổng đào tạo.");
+            loadGradesFromServer();
+        }
+
+        function clearCookie() {
+            const cookieInput = document.getElementById('cookie-input');
+            const cookieValMsg = document.getElementById('cookie-validation-msg');
+            
+            cookieInput.value = '';
+            cookieValMsg.classList.add('hidden');
+            
+            localStorage.removeItem('kma_joomla_cookie');
+            localStorage.removeItem('kma_user_agent');
+            localStorage.removeItem('kma_grades_db');
+            
+            alert("Đã xoá cookie! Hệ thống sẽ khôi phục về tài khoản mặc định.");
+            loadGradesFromServer();
+        }
+
+        // Calculate needed score planner
+        function calculateGoal() {
+            const target = parseFloat(document.getElementById('target-gpa').value) || 3.2;
+            let currentWeighted4 = 0.0;
+            let currentCredits = 0;
+            let pendingCredits = 0;
+
+            dbGrades.forEach(s => {
+                const isGdtc = s.subject.toLowerCase().includes('thể chất');
+                const hasGrade = s.course !== '-' && s.course !== '';
+                const cred = parseInt(s.credits) || 0;
+                
+                if (!isGdtc) {
+                    if (hasGrade) {
+                        const val10 = parseFloat(s.course);
+                        const val4 = getLetterRating(val10).gpa4;
+                        currentWeighted4 += val4 * cred;
+                        currentCredits += cred;
+                    } else {
+                        pendingCredits += cred;
+                    }
+                }
+            });
+
+            const resultBox = document.getElementById('goal-result');
+            resultBox.classList.remove('hidden');
+
+            if (pendingCredits === 0) {
+                resultBox.innerHTML = `
+                    <div class="font-bold text-amber-400">⚠️ Không có môn học kế hoạch nào!</div>
+                    <div class="text-xs">Hãy tạo hoặc sửa điểm của các môn học hiện tại thành trống (dấu "-") để thực hiện lập kế hoạch điểm mục tiêu cho môn học đó.</div>
+                `;
+                return;
+            }
+
+            const totalProjectedCredits = currentCredits + pendingCredits;
+            const targetWeighted = target * totalProjectedCredits;
+            const neededWeighted = targetWeighted - currentWeighted4;
+            const neededAvg4 = neededWeighted / pendingCredits;
+
+            if (neededAvg4 > 4.0) {
+                resultBox.innerHTML = `
+                    <div class="font-bold text-red-400">❌ Mục tiêu bất khả thi!</div>
+                    <div class="text-xs">Bạn cần điểm trung bình Hệ 4 của các môn học kế hoạch là <span class="font-extrabold text-white">${neededAvg4.toFixed(2)}</span> (vượt quá mức tối đa 4.0). Hãy thử đặt mục tiêu thấp hơn hoặc tăng số tín chỉ tích lũy.</div>
+                `;
+            } else if (neededAvg4 <= 0) {
+                resultBox.innerHTML = `
+                    <div class="font-bold text-emerald-400">✅ Đã Đạt Mục Tiêu!</div>
+                    <div class="text-xs">Điểm tích lũy hiện tại của bạn đã đủ để đạt GPA mục tiêu mà không cần thêm điểm ở các môn kế hoạch còn lại!</div>
+                `;
+            } else {
+                let suggestedLetter = 'A';
+                if (neededAvg4 <= 2.0) suggestedLetter = 'C';
+                else if (neededAvg4 <= 2.4) suggestedLetter = 'C+';
+                else if (neededAvg4 <= 3.0) suggestedLetter = 'B';
+                else if (neededAvg4 <= 3.5) suggestedLetter = 'B+';
+                
+                resultBox.innerHTML = `
+                    <div class="font-bold text-emerald-400">🎯 Kế hoạch chi tiết:</div>
+                    <div class="text-xs space-y-1 mt-1">
+                        <div>• Điểm tích lũy hiện tại: <span class="font-bold text-white">${(currentWeighted4 / currentCredits).toFixed(2)}</span> (${currentCredits} TC)</div>
+                        <div>• Số tín chỉ đang lên kế hoạch: <span class="font-bold text-white">${pendingCredits} TC</span></div>
+                        <div>• Điểm Hệ 4 trung bình cần đạt: <span class="font-bold text-yellow-400 text-base">${neededAvg4.toFixed(2)}</span></div>
+                        <div class="mt-2 text-white font-medium bg-teal-600/30 p-2 rounded border border-teal-500/20">
+                            💡 Gợi ý: Bạn cần đạt điểm trung bình tối thiểu mức điểm chữ <span class="text-yellow-300 font-extrabold">${suggestedLetter}</span> ở toàn bộ các môn kế hoạch để hoàn thành mục tiêu GPA ${target.toFixed(2)}.
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        // Connect API
+        function loadGradesFromServer() {
+            // Check if local storage already has user database edits
+            const cached = localStorage.getItem('kma_grades_db');
+            if (cached) {
+                dbGrades = JSON.parse(cached);
+            }
+
+            const connBadge = document.getElementById('conn-badge');
+            const connDot = document.getElementById('conn-dot');
+            if (connBadge) {
+                connBadge.textContent = "CONNECTING";
+                connBadge.className = "text-[8px] px-1 py-0.5 rounded font-extrabold uppercase tracking-wide shrink-0 bg-amber-500/10 text-amber-400 border border-amber-500/20 animate-pulse";
+            }
+            if (connDot) {
+                connDot.className = "absolute bottom-0 right-0 w-2.5 h-2.5 bg-amber-500 border-2 border-gray-950 rounded-full animate-ping";
+            }
+
+            const customCookie = localStorage.getItem('kma_joomla_cookie');
+            const customUA = localStorage.getItem('kma_user_agent');
+            const headers = {};
+            if (customCookie) {
+                headers['X-Joomla-Cookie'] = customCookie;
+            }
+            if (customUA) {
+                headers['X-User-Agent'] = customUA;
+            }
+
+            fetch('/api/grades', { headers })
+                .then(res => res.json())
+                .then(data => {
+                    originalGrades = JSON.parse(JSON.stringify(data.grades));
+                    gpaScale = data.GPA_SCALE;
+                    allSubjectsDb = data.ALL_SUBJECTS_DB || [];
+                    
+                    if (!cached) {
+                        dbGrades = data.grades;
+                    }
+                    
+                    if (data.isLive) {
+                        if (connBadge) {
+                            connBadge.textContent = "LIVE PORTAL";
+                            connBadge.className = "text-[8px] px-1 py-0.5 rounded font-extrabold uppercase tracking-wide shrink-0 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20";
+                        }
+                        if (connDot) {
+                            connDot.className = "absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 border-2 border-gray-950 rounded-full shadow-lg shadow-emerald-500/50";
+                        }
+                    } else {
+                        if (connBadge) {
+                            connBadge.textContent = "OFFLINE MODE";
+                            connBadge.className = "text-[8px] px-1 py-0.5 rounded font-extrabold uppercase tracking-wide shrink-0 bg-blue-500/10 text-blue-400 border border-blue-500/20";
+                        }
+                        if (connDot) {
+                            connDot.className = "absolute bottom-0 right-0 w-2.5 h-2.5 bg-blue-500 border-2 border-gray-950 rounded-full shadow-lg shadow-blue-500/50";
+                        }
+                    }
+                    
+                    if (data.userInfo) {
+                        document.getElementById('profile-name').textContent = data.userInfo.name || "Không rõ";
+                        document.getElementById('profile-id').textContent = "ID: " + (data.userInfo.id || "Không rõ");
+                        document.getElementById('profile-email').textContent = data.userInfo.email || "";
+                        document.getElementById('profile-name').className = "text-xs font-bold text-emerald-400 truncate max-w-[120px]";
+                    } else {
+                        document.getElementById('profile-name').textContent = "Chế độ Khách (Offline)";
+                        document.getElementById('profile-id').textContent = "ID: Trống";
+                        document.getElementById('profile-email').textContent = "Offline Mode";
+                        document.getElementById('profile-name').className = "text-xs font-bold text-white truncate max-w-[120px]";
+                    }
+
+                    updateDashboardCalculations();
+                })
+                .catch(err => {
+                    console.error("API error:", err);
+                    if (connBadge) {
+                        connBadge.textContent = "ERROR";
+                        connBadge.className = "text-[8px] px-1 py-0.5 rounded font-extrabold uppercase tracking-wide shrink-0 bg-red-500/10 text-red-400 border border-red-500/20";
+                    }
+                    if (connDot) {
+                        connDot.className = "absolute bottom-0 right-0 w-2.5 h-2.5 bg-red-500 border-2 border-gray-950 rounded-full shadow-lg shadow-red-500/50";
+                    }
+                    if (cached) {
+                        updateDashboardCalculations();
+                    }
+                });
+        }
+
+        function refreshDataFromServer() {
+            localStorage.removeItem('kma_grades_db');
+            loadGradesFromServer();
+        }
+
+        function resetToOriginalCrawl() {
+            if (confirm("Bạn có chắc chắn muốn khôi phục toàn bộ các thay đổi và tải lại điểm gốc từ server?")) {
+                refreshDataFromServer();
+            }
+        }
+
+        // Initialize
+        window.onload = loadGradesFromServer;
+    </script>
+</body>
+</html>

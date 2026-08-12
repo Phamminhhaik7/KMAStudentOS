@@ -10,6 +10,8 @@ servers:
 tags:
   - name: health
     description: Health operations
+  - name: grades
+    description: Grade crawling and curriculum operations
 paths:
   /healthz:
     get:
@@ -24,6 +26,40 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+  /grades:
+    get:
+      operationId: getGrades
+      tags: [grades]
+      summary: Fetch grades
+      description: >-
+        Fetches the student's grades from the ACTVN training portal using an
+        optionally-provided session cookie. Falls back to bundled sample data
+        when no cookie is provided or the live fetch fails. Also returns the
+        GPA letter-grade scale and the curriculum's subject catalog (code,
+        name, credits) used for autocomplete when adding planned subjects.
+      parameters:
+        - name: X-Portal-Cookie
+          in: header
+          required: false
+          description: >-
+            Session cookie string for the ACTVN training portal (either a
+            26-character session id or a full "key=value; ..." cookie
+            string). Omit to use bundled sample data.
+          schema:
+            type: string
+        - name: X-Portal-User-Agent
+          in: header
+          required: false
+          description: Custom User-Agent to present to the training portal.
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Grades fetched successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GradesResponse"
 components:
   schemas:
     HealthStatus:
@@ -33,4 +69,105 @@ components:
           type: string
       required:
         - status
+    Grade:
+      type: object
+      description: A single exam/course record.
+      properties:
+        stt:
+          type: string
+        year:
+          type: string
+        term:
+          type: string
+        subject:
+          type: string
+        code:
+          type: string
+        credits:
+          type: number
+        attempt:
+          type: string
+        tp1:
+          type: string
+        tp2:
+          type: string
+        dqt:
+          type: string
+        exam:
+          type: string
+        course:
+          type: string
+        letter:
+          type: string
+      required:
+        - stt
+        - year
+        - term
+        - subject
+        - code
+        - credits
+        - attempt
+        - tp1
+        - tp2
+        - dqt
+        - exam
+        - course
+        - letter
+    Subject:
+      type: object
+      description: A curriculum subject available for planning.
+      properties:
+        code:
+          type: string
+        name:
+          type: string
+        credits:
+          type: number
+      required:
+        - code
+        - name
+        - credits
+    PortalUserInfo:
+      type: object
+      properties:
+        name:
+          type: string
+        id:
+          type: string
+        email:
+          type: string
+      required:
+        - name
+        - id
+        - email
+    GradesResponse:
+      type: object
+      properties:
+        isLive:
+          type: boolean
+          description: Whether the grades came from a live portal fetch or fallback sample data.
+        grades:
+          type: array
+          items:
+            $ref: "#/components/schemas/Grade"
+        subjects:
+          type: array
+          items:
+            $ref: "#/components/schemas/Subject"
+        gpaScale:
+          type: object
+          description: Letter grade to 4.0-scale GPA value mapping.
+          additionalProperties:
+            type: number
+        userInfo:
+          description: The logged-in student's info, or null when using sample data.
+          oneOf:
+            - $ref: "#/components/schemas/PortalUserInfo"
+            - type: "null"
+      required:
+        - isLive
+        - grades
+        - subjects
+        - gpaScale
+        - userInfo
 

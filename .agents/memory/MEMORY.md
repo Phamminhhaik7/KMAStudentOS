@@ -1,0 +1,1 @@
+- [Orval codegen import/naming gotchas](orval-codegen-gotchas.md) — GET response Zod schemas are prefixed by operationId (e.g. `GetGradesResponse`, not `GradesResponse`); always import generated types from the package root, never `/src/generated/...`.
