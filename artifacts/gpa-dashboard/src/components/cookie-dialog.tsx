@@ -32,7 +32,7 @@ export function AuthDialog({
 
   const handleLoginClick = () => {
     window.open(
-      'https://login.microsoftonline.com/common/oauth2/v2.0/authorize?client_id=fbad147e-ffd3-419f-989a-7aceae620f77&response_type=code&redirect_uri=https://ktdbcl.actvn.edu.vn/index.php/aksociallogin_finishLogin/microsoft.raw&response_mode=fragment&scope=user.read',
+      'https://login.microsoftonline.com/0aa16d8a-a396-4e21-aa14-2a68a45786bc/oauth2/v2.0/authorize?response_type=code&client_id=fbad147e-ffd3-419f-989a-7aceae620f77&redirect_uri=https%3A%2F%2Fktdbcl.actvn.edu.vn%2Findex.php%2Faksociallogin_finishLogin%2Fmicrosoft.raw&scope=user.read&response_mode=fragment',
       '_blank'
     );
   };
