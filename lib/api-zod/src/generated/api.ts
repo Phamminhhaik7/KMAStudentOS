@@ -57,3 +57,16 @@ export const GetGradesResponse = zod.object({
 })
 
 
+/**
+ * The ACTVN portal's Microsoft Edu login always redirects back to the school's own domain (its OAuth client is hardcoded to that redirect_uri), so the browser cannot capture the result directly. Instead, the user copies the final redirect URL (which contains a Microsoft `code` query parameter) and pastes it here. The server exchanges that code with the portal, resolves the portal's duplicate-named Set-Cookie headers (keeping the last value for each name), and returns a single usable session cookie string.
+ * @summary Exchange a Microsoft login redirect URL for a portal session cookie
+ */
+export const ExchangeMicrosoftCodeBody = zod.object({
+  "redirectUrl": zod.string().describe('The full URL the browser was redirected to after Microsoft login completed on the school\'s domain (must contain a `code` query parameter).')
+})
+
+export const ExchangeMicrosoftCodeResponse = zod.object({
+  "cookie": zod.string().describe('Resolved ACTVN portal session cookie string, ready to use as the X-Portal-Cookie header on subsequent \/grades requests.')
+})
+
+

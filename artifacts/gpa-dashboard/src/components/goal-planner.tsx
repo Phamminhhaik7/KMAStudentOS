@@ -9,7 +9,6 @@ export function GoalPlanner({ grades, currentGpa4, totalCredits }: { grades: Gra
   const [target, setTarget] = useState<string>('3.2');
 
   const { remainingCredits, result } = useMemo(() => {
-    // Ungraded / planned subjects (no final course score or letter)
     const pending = grades.filter(g => 
       !isPhysicalEducation(g.subject) && 
       (!g.course || g.course === '-' || g.stt.startsWith('planned_'))
@@ -24,55 +23,48 @@ export function GoalPlanner({ grades, currentGpa4, totalCredits }: { grades: Gra
 
     if (remCredits === 0) {
       if (currentGpa4 >= t) {
-        return { remainingCredits: remCredits, result: { type: 'achieved', msg: "You've already hit this target!" } };
+        return { remainingCredits: remCredits, result: { type: 'achieved', msg: "Bạn đã đạt được mục tiêu này!" } };
       }
-      return { remainingCredits: remCredits, result: { type: 'impossible', msg: "No credits remaining to improve GPA." } };
+      return { remainingCredits: remCredits, result: { type: 'impossible', msg: "Không còn tín chỉ nào để cải thiện GPA." } };
     }
 
-    // Formula: Target = (CurrentGPA * CurrentCredits + NeededAvg * RemCredits) / (CurrentCredits + RemCredits)
-    // NeededAvg = (Target * (CurrentCredits + RemCredits) - CurrentGPA * CurrentCredits) / RemCredits
-    
-    // Actually, currentGpa4 and totalCredits above already include all subjects with valid grades.
-    // However, if some 'planned_' subjects have grades, they are already in totalCredits.
-    // The `pending` calculation above checks for missing `course`. So totalCredits is strictly "credits with grades".
-    
     const requiredTotalPoints = t * (totalCredits + remCredits);
     const currentPoints = currentGpa4 * totalCredits;
     const neededPoints = requiredTotalPoints - currentPoints;
     const neededAvg = neededPoints / remCredits;
 
     if (neededAvg > 4.0) {
-      return { remainingCredits: remCredits, result: { type: 'impossible', msg: `Mathematically impossible. You'd need a ${neededAvg.toFixed(2)} average.` } };
+      return { remainingCredits: remCredits, result: { type: 'impossible', msg: `Không thể đạt được. Bạn cần trung bình ${neededAvg.toFixed(2)}.` } };
     }
     
     if (neededAvg <= 0) {
-      return { remainingCredits: remCredits, result: { type: 'achieved', msg: "You're already above track to hit this." } };
+      return { remainingCredits: remCredits, result: { type: 'achieved', msg: "Bạn đang vượt tiến độ để đạt mục tiêu này." } };
     }
 
     return { 
       remainingCredits: remCredits, 
       result: { 
         type: 'possible', 
-        msg: `You need to average ${neededAvg.toFixed(2)} across your ${remCredits} remaining planned/ungraded credits.` 
+        msg: `Bạn cần đạt trung bình ${neededAvg.toFixed(2)} cho ${remCredits} tín chỉ dự kiến/chưa có điểm còn lại.` 
       } 
     };
   }, [grades, currentGpa4, totalCredits, target]);
 
   return (
-    <div className="bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20 rounded-xl p-6 relative overflow-hidden">
-      <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none">
-        <Target className="w-32 h-32 text-primary" />
+    <div className="bg-gradient-to-br from-primary/5 to-transparent border border-primary/10 rounded-2xl p-6 relative overflow-hidden transition-all duration-300 hover:shadow-sm hover:border-primary/20 group">
+      <div className="absolute -top-10 -right-10 p-8 opacity-[0.03] pointer-events-none transition-transform duration-700 group-hover:scale-110 group-hover:rotate-12">
+        <Target className="w-64 h-64 text-primary" />
       </div>
       
       <div className="relative z-10">
-        <h3 className="text-lg font-bold text-primary flex items-center gap-2 mb-4">
+        <h3 className="text-base font-bold text-primary flex items-center gap-2 mb-5">
           <Trophy className="w-5 h-5" />
-          Goal Planner
+          Kế hoạch GPA
         </h3>
         
-        <div className="flex flex-col sm:flex-row gap-6 items-start sm:items-center">
-          <div className="flex items-center gap-3">
-            <label className="text-sm font-semibold text-foreground whitespace-nowrap">Target 4.0 GPA:</label>
+        <div className="flex flex-col md:flex-row gap-6 items-start md:items-center">
+          <div className="flex items-center gap-4 bg-background px-4 py-2 rounded-xl border border-border shadow-sm">
+            <label className="text-sm font-semibold text-foreground whitespace-nowrap">Mục tiêu Hệ 4:</label>
             <Input 
               type="number" 
               step="0.01"
@@ -80,36 +72,42 @@ export function GoalPlanner({ grades, currentGpa4, totalCredits }: { grades: Gra
               max="4.0"
               value={target}
               onChange={e => setTarget(e.target.value)}
-              className="w-24 font-mono font-bold text-primary bg-background border-primary/30"
+              className="w-24 font-mono font-bold text-primary bg-muted/50 border-none shadow-none text-lg h-9"
             />
           </div>
           
-          <div className="hidden sm:block text-muted-foreground">
+          <div className="hidden md:flex text-muted-foreground/50">
             <ArrowRight className="w-5 h-5" />
           </div>
           
-          <div className="flex-1">
+          <div className="flex-1 w-full">
             {remainingCredits === 0 ? (
-              <p className="text-sm text-muted-foreground flex items-center gap-2">
-                <XCircle className="w-4 h-4" /> Add planned subjects below to forecast goals.
+              <p className="text-sm text-muted-foreground flex items-center gap-2 bg-muted/30 px-4 py-3 rounded-xl border border-border/50">
+                <XCircle className="w-4 h-4 text-muted-foreground/70" /> Thêm môn dự kiến bên dưới để tính toán.
               </p>
             ) : result ? (
               <motion.div 
                 key={result.type}
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                className={`text-sm font-medium p-3 rounded-lg flex items-start gap-3 border ${
-                  result.type === 'achieved' ? 'bg-emerald-500/10 text-emerald-700 border-emerald-500/20' :
+                initial={{ opacity: 0, y: 5 }}
+                animate={{ opacity: 1, y: 0 }}
+                className={`text-sm font-medium p-4 rounded-xl flex items-center gap-4 border shadow-sm ${
+                  result.type === 'achieved' ? 'bg-emerald-500/10 text-emerald-800 border-emerald-500/20' :
                   result.type === 'impossible' ? 'bg-destructive/10 text-destructive border-destructive/20' :
-                  'bg-background text-foreground border-border shadow-sm'
+                  'bg-background text-foreground border-border'
                 }`}
               >
                 {result.type === 'possible' ? (
-                  <span className="font-mono text-primary text-2xl leading-none mt-0.5 block">
-                    {result.msg.match(/([0-9.]+)/)?.[1] || ''}
-                  </span>
-                ) : null}
-                <span className="leading-tight mt-0.5">{result.msg}</span>
+                  <>
+                    <div className="flex flex-col items-center justify-center bg-primary/10 text-primary w-14 h-12 rounded-lg shrink-0 border border-primary/10">
+                      <span className="font-mono font-bold text-xl leading-none">
+                        {result.msg.match(/([0-9.]+)/)?.[1] || ''}
+                      </span>
+                    </div>
+                    <span className="leading-relaxed text-muted-foreground">điểm trung bình cần thiết cho <strong className="text-foreground">{remainingCredits} tín chỉ</strong> chưa có điểm.</span>
+                  </>
+                ) : (
+                  <span className="leading-tight">{result.msg}</span>
+                )}
               </motion.div>
             ) : null}
           </div>

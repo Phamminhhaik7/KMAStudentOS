@@ -59,3 +59,13 @@ export interface GradesResponse {
   userInfo: PortalUserInfo | null;
 }
 
+export interface MicrosoftExchangeRequest {
+  /** The full URL the browser was redirected to after Microsoft login completed on the school's domain (must contain a `code` query parameter). */
+  redirectUrl: string;
+}
+
+export interface MicrosoftExchangeResponse {
+  /** Resolved ACTVN portal session cookie string, ready to use as the X-Portal-Cookie header on subsequent /grades requests. */
+  cookie: string;
+}
+

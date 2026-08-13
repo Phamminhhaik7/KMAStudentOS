@@ -1,5 +1,5 @@
 import { memo, useState, useEffect, useRef } from "react";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { TableCell, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Trash2, AlertCircle } from "lucide-react";
 import type { Grade, GradesResponseGpaScale } from "@workspace/api-client-react";
@@ -58,7 +58,7 @@ const EditableCell = memo(({
         onBlur={handleBlur}
         onKeyDown={handleKeyDown}
         autoFocus
-        className={`w-full max-w-[60px] h-7 px-1.5 text-center text-sm bg-background border border-primary/40 rounded focus:outline-none focus:ring-2 focus:ring-primary/30 ${className}`}
+        className={`w-full max-w-[60px] h-8 px-1.5 text-center text-sm font-mono font-medium bg-background border-2 border-primary/40 rounded focus:outline-none focus:border-primary/80 focus:ring-2 focus:ring-primary/20 ${className}`}
         placeholder="-"
       />
     );
@@ -66,7 +66,7 @@ const EditableCell = memo(({
 
   return (
     <div 
-      className={`cursor-pointer hover:bg-muted/50 rounded px-1.5 py-1 text-center transition-colors min-h-[28px] flex items-center justify-center ${className}`}
+      className={`cursor-pointer hover:bg-muted/70 rounded px-1.5 py-1.5 text-center transition-colors min-h-[32px] flex items-center justify-center font-mono ${className}`}
       onClick={() => setIsEditing(true)}
     >
       {value}
@@ -78,13 +78,13 @@ export const GradeRow = memo(({ grade, gpaScale, onUpdate, onDelete }: GradeRowP
   const isPE = isPhysicalEducation(grade.subject);
 
   return (
-    <TableRow className={`group ${isPE ? "opacity-60" : ""}`}>
+    <TableRow className={`group transition-colors hover:bg-muted/30 ${isPE ? "opacity-60 grayscale-[0.5]" : ""}`}>
       <TableCell className="font-mono text-xs text-muted-foreground w-16">{grade.code}</TableCell>
-      <TableCell className="max-w-[200px]">
-        <div className="font-medium truncate" title={grade.subject}>{grade.subject}</div>
-        {isPE && <div className="text-[10px] text-muted-foreground uppercase flex items-center gap-1 mt-0.5"><AlertCircle className="w-3 h-3"/> Excluded from GPA</div>}
+      <TableCell className="max-w-[200px] font-medium">
+        <div className="truncate text-foreground/90" title={grade.subject}>{grade.subject}</div>
+        {isPE && <div className="text-[10px] text-muted-foreground font-semibold flex items-center gap-1 mt-1 bg-muted w-fit px-1.5 py-0.5 rounded"><AlertCircle className="w-3 h-3"/> Không tính GPA</div>}
       </TableCell>
-      <TableCell className="text-center">{grade.credits}</TableCell>
+      <TableCell className="text-center font-mono font-medium">{grade.credits}</TableCell>
       <TableCell>
         <EditableCell value={grade.tp1} onChange={(v) => onUpdate(grade.stt, 'tp1', v)} />
       </TableCell>
@@ -97,21 +97,21 @@ export const GradeRow = memo(({ grade, gpaScale, onUpdate, onDelete }: GradeRowP
       <TableCell>
         <EditableCell value={grade.exam} onChange={(v) => onUpdate(grade.stt, 'exam', v)} />
       </TableCell>
-      <TableCell className="font-semibold">
+      <TableCell className="font-bold">
         <EditableCell 
           value={grade.course} 
           onChange={(v) => onUpdate(grade.stt, 'course', v)} 
           className="bg-primary/5 text-primary rounded"
         />
       </TableCell>
-      <TableCell className="text-center font-bold text-primary">
+      <TableCell className="text-center font-bold text-primary font-mono text-base">
         {grade.letter}
       </TableCell>
       <TableCell className="text-right w-12">
         <Button 
           variant="ghost" 
           size="icon"
-          className="h-7 w-7 text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
+          className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10 opacity-0 group-hover:opacity-100 transition-all focus:opacity-100"
           onClick={() => onDelete(grade.stt)}
         >
           <Trash2 className="w-4 h-4" />

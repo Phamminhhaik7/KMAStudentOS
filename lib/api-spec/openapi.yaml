@@ -12,6 +12,8 @@ tags:
     description: Health operations
   - name: grades
     description: Grade crawling and curriculum operations
+  - name: auth
+    description: Portal authentication operations
 paths:
   /healthz:
     get:
@@ -60,6 +62,37 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/GradesResponse"
+  /auth/microsoft-exchange:
+    post:
+      operationId: exchangeMicrosoftCode
+      tags: [auth]
+      summary: Exchange a Microsoft login redirect URL for a portal session cookie
+      description: >-
+        The ACTVN portal's Microsoft Edu login always redirects back to the
+        school's own domain (its OAuth client is hardcoded to that
+        redirect_uri), so the browser cannot capture the result directly.
+        Instead, the user copies the final redirect URL (which contains a
+        Microsoft `code` query parameter) and pastes it here. The server
+        exchanges that code with the portal, resolves the portal's
+        duplicate-named Set-Cookie headers (keeping the last value for each
+        name), and returns a single usable session cookie string.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MicrosoftExchangeRequest"
+      responses:
+        "200":
+          description: Session cookie resolved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MicrosoftExchangeResponse"
+        "400":
+          description: The redirect URL is missing a Microsoft `code` query parameter.
+        "502":
+          description: The ACTVN portal did not return a session cookie for this code.
 components:
   schemas:
     HealthStatus:
@@ -170,4 +203,25 @@ components:
         - subjects
         - gpaScale
         - userInfo
+    MicrosoftExchangeRequest:
+      type: object
+      properties:
+        redirectUrl:
+          type: string
+          description: >-
+            The full URL the browser was redirected to after Microsoft login
+            completed on the school's domain (must contain a `code` query
+            parameter).
+      required:
+        - redirectUrl
+    MicrosoftExchangeResponse:
+      type: object
+      properties:
+        cookie:
+          type: string
+          description: >-
+            Resolved ACTVN portal session cookie string, ready to use as the
+            X-Portal-Cookie header on subsequent /grades requests.
+      required:
+        - cookie
 

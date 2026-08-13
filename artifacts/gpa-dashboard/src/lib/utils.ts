@@ -24,11 +24,11 @@ export interface GpaStats {
 }
 
 export function getClassification(gpa4: number): string {
-  if (gpa4 >= 3.6) return "Xuất sắc (Excellent)";
-  if (gpa4 >= 3.2) return "Giỏi (Good)";
-  if (gpa4 >= 2.5) return "Khá (Fair)";
-  if (gpa4 >= 2.0) return "Trung bình (Average)";
-  return "Yếu (Weak)";
+  if (gpa4 >= 3.6) return "Xuất sắc";
+  if (gpa4 >= 3.2) return "Giỏi";
+  if (gpa4 >= 2.5) return "Khá";
+  if (gpa4 >= 2.0) return "Trung bình";
+  return "Yếu";
 }
 
 export function calculateGpa(grades: Grade[], scale: GradesResponseGpaScale): GpaStats {
@@ -64,8 +64,6 @@ export function computeCourseGrade(dqtStr: string, examStr: string): number | nu
 }
 
 export function getLetterGrade(courseGrade: number, scale: GradesResponseGpaScale): string {
-  // Approximate ACTVN scale logic if we don't have exact ranges, but usually:
-  // A+ (9.0-10), A (8.5-8.9), B+ (8.0-8.4), B (7.0-7.9), C+ (6.5-6.9), C (5.5-6.4), D+ (5.0-5.4), D (4.0-4.9), F (0-3.9)
   if (courseGrade >= 9.0) return "A+";
   if (courseGrade >= 8.5) return "A";
   if (courseGrade >= 8.0) return "B+";
@@ -81,7 +79,6 @@ export function extractCurlCredentials(text: string): { cookie: string, ua: stri
   const cookieMatch = text.match(/[Hh]eader ['"]Cookie: (.*?)['"]/);
   const uaMatch = text.match(/[Hh]eader ['"]User-Agent: (.*?)['"]/);
   
-  // also check for lowercase -H
   const cookieMatchH = text.match(/-H ['"]cookie: (.*?)['"]/i);
   const uaMatchH = text.match(/-H ['"]user-agent: (.*?)['"]/i);
 

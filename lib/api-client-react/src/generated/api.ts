@@ -6,22 +6,28 @@
  * OpenAPI spec version: 0.1.0
  */
 import {
+  useMutation,
   useQuery
 } from '@tanstack/react-query';
 import type {
+  MutationFunction,
   QueryFunction,
   QueryKey,
+  UseMutationOptions,
+  UseMutationResult,
   UseQueryOptions,
   UseQueryResult
 } from '@tanstack/react-query';
 
 import type {
   GradesResponse,
-  HealthStatus
+  HealthStatus,
+  MicrosoftExchangeRequest,
+  MicrosoftExchangeResponse
 } from './api.schemas';
 
 import { customFetch } from '../custom-fetch';
-import type { ErrorType } from '../custom-fetch';
+import type { ErrorType , BodyType } from '../custom-fetch';
 
 type AwaitedInput<T> = PromiseLike<T> | T;
 
@@ -202,4 +208,76 @@ export function useGetGrades<TData = Awaited<ReturnType<typeof getGrades>>, TErr
 
 
 
+
+export const getExchangeMicrosoftCodeUrl = () => {
+
+
+
+
+  return `/api/auth/microsoft-exchange`
+}
+
+/**
+ * The ACTVN portal's Microsoft Edu login always redirects back to the school's own domain (its OAuth client is hardcoded to that redirect_uri), so the browser cannot capture the result directly. Instead, the user copies the final redirect URL (which contains a Microsoft `code` query parameter) and pastes it here. The server exchanges that code with the portal, resolves the portal's duplicate-named Set-Cookie headers (keeping the last value for each name), and returns a single usable session cookie string.
+ * @summary Exchange a Microsoft login redirect URL for a portal session cookie
+ */
+export const exchangeMicrosoftCode = async (microsoftExchangeRequest: MicrosoftExchangeRequest, options?: Parameters<typeof customFetch>[1]): Promise<MicrosoftExchangeResponse> => {
+
+  return customFetch<MicrosoftExchangeResponse>(getExchangeMicrosoftCodeUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(microsoftExchangeRequest)
+  }
+);}
+
+
+
+
+
+export const getExchangeMicrosoftCodeMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof exchangeMicrosoftCode>>, TError,{data: BodyType<MicrosoftExchangeRequest>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof exchangeMicrosoftCode>>, TError,{data: BodyType<MicrosoftExchangeRequest>}, TContext> => {
+
+const mutationKey = ['exchangeMicrosoftCode'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof exchangeMicrosoftCode>>, {data: BodyType<MicrosoftExchangeRequest>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  exchangeMicrosoftCode(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ExchangeMicrosoftCodeMutationResult = NonNullable<Awaited<ReturnType<typeof exchangeMicrosoftCode>>>
+    export type ExchangeMicrosoftCodeMutationBody = BodyType<MicrosoftExchangeRequest>
+    export type ExchangeMicrosoftCodeMutationError = ErrorType<void>
+
+    /**
+ * @summary Exchange a Microsoft login redirect URL for a portal session cookie
+ */
+export const useExchangeMicrosoftCode = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof exchangeMicrosoftCode>>, TError,{data: BodyType<MicrosoftExchangeRequest>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof exchangeMicrosoftCode>>,
+        TError,
+        {data: BodyType<MicrosoftExchangeRequest>},
+        TContext
+      > => {
+      return useMutation(getExchangeMicrosoftCodeMutationOptions(options));
+    }
 

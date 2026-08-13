@@ -10,5 +10,7 @@ export * from './grade';
 export * from './gradesResponse';
 export * from './gradesResponseGpaScale';
 export * from './healthStatus';
+export * from './microsoftExchangeRequest';
+export * from './microsoftExchangeResponse';
 export * from './portalUserInfo';
 export * from './subject';

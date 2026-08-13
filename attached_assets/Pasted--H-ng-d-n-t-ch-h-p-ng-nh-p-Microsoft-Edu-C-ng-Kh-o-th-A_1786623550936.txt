@@ -1,0 +1,99 @@
+# Hướng dẫn tích hợp Đăng nhập Microsoft Edu (Cổng Khảo thí ACTVN)
+
+Tài liệu này mô tả chi tiết cơ chế đăng nhập và trích xuất dữ liệu từ trang Khảo thí của trường (xây dựng trên nền tảng Joomla với plugin `aksociallogin`). Hãy cung cấp tài liệu này cho AI phụ trách Frontend/Backend của bạn để triển khai.
+
+## 1. Bản chất của vấn đề
+Hệ thống của trường sử dụng Azure AD (Microsoft) để xác thực. Tuy nhiên, `client_id` của trường đã bị khóa cứng (hardcode) với `redirect_uri` là tên miền của trường (`ktdbcl.actvn.edu.vn`).
+Vì vậy, khi đăng nhập xong, Microsoft **BẮT BUỘC** phải chuyển hướng trình duyệt về trang của trường. Do giới hạn bảo mật Cross-Origin Policy, trang web của chúng ta không thể tự động bắt được đoạn mã `code` này mà phải yêu cầu người dùng copy/paste thủ công.
+
+## 2. Luồng hoạt động (Workflow)
+
+### Bước 1: Tạo Link Đăng nhập (Frontend)
+Frontend cần tạo một nút "Đăng nhập MS Edu" trỏ tới URL sau (có thể mở trong tab mới hoặc popup):
+
+```text
+https://login.microsoftonline.com/common/oauth2/v2.0/authorize
+  ?client_id=fbad147e-ffd3-419f-989a-7aceae620f77
+  &response_type=code
+  &redirect_uri=https://ktdbcl.actvn.edu.vn/index.php/aksociallogin_finishLogin/microsoft.raw
+  &response_mode=query
+  &scope=openid%20profile%20email
+```
+> [!NOTE] 
+> Bắt buộc dùng `response_mode=query` để mã `code` xuất hiện trên URL thay vì bị ẩn trong fragment (`#`).
+
+### Bước 2: Người dùng Copy URL (Frontend)
+Sau khi người dùng đăng nhập thành công, trình duyệt sẽ bị chuyển hướng đến trang lỗi của trường (hoặc trang chủ) với URL có dạng:
+`https://ktdbcl.actvn.edu.vn/index.php/aksociallogin_finishLogin/microsoft.raw?code=MÃ_CODE_DÀI_NGOẰNG&session_state=...`
+
+Frontend cung cấp một ô Input để người dùng dán toàn bộ URL này vào, sau đó trích xuất lấy giá trị của `code` và gửi về Backend.
+
+### Bước 3: Backend đổi Code lấy Session Cookie (Backend)
+Khi Backend nhận được URL (hoặc mã `code`), Backend sẽ thực hiện một lệnh `GET` trực tiếp tới URL đó:
+
+```javascript
+// Gửi GET request tới ktdbcl.actvn.edu.vn kèm theo mã code
+const response = await fetch(
+  `https://ktdbcl.actvn.edu.vn/index.php/aksociallogin_finishLogin/microsoft.raw?code=${code}`
+);
+```
+
+### Bước 4: Xử lý Cookie - BƯỚC QUAN TRỌNG NHẤT ⚠️
+Đây là lỗi cực kỳ hiếm gặp của Joomla mà bạn **BẮT BUỘC** phải dặn AI xử lý đúng.
+
+Khi request trên thành công, Joomla trả về status `303 See Other` và gửi kèm **nhiều thẻ `Set-Cookie`**. Đáng chú ý nhất, Joomla tạo ra một Session ảo rồi hủy ngay lập tức và tạo một Session thật, dẫn đến việc **có 2 Cookie trùng tên nhau** trong header phản hồi.
+
+Ví dụ Header `Set-Cookie` trả về:
+1. `23782a59952067715128532cfcd568f5=SESSION_CHẾT; path=/; HttpOnly`
+2. `23782a59952067715128532cfcd568f5=SESSION_SỐNG; path=/; HttpOnly`
+3. `joomla_user_state=logged_in; path=/; HttpOnly`
+
+> [!CAUTION]
+> Nếu Backend gom tất cả Cookie này lại thành một chuỗi `Cookie: TÊN=CHẾT; TÊN=SỐNG` để dùng, máy chủ PHP của trường sẽ chỉ đọc giá trị **ĐẦU TIÊN** (SESSION_CHẾT) và đánh giá là bạn chưa đăng nhập, trả về lỗi *"Không xác định được thí sinh"*.
+
+**Cách giải quyết (Mã mẫu cho Backend NodeJS):**
+Backend phải dùng cấu trúc `Map` (hoặc `Dictionary`) để khi gặp Cookie trùng tên, giá trị **SAU** sẽ đè lên giá trị **TRƯỚC**.
+
+```javascript
+const rawCookies = response.headers.getSetCookie(); // Lấy mảng Set-Cookie
+const cookieMap = new Map();
+
+rawCookies.forEach(cookieString => {
+  const pair = cookieString.split(';')[0]; // Chỉ lấy phần Tên=GiáTrị
+  const eqIndex = pair.indexOf('=');
+  
+  if (eqIndex !== -1) {
+    const key = pair.slice(0, eqIndex).trim();
+    const val = pair.slice(eqIndex + 1).trim();
+    // Ghi đè nếu trùng tên -> Giữ lại SESSION_SỐNG cuối cùng
+    cookieMap.set(key, val);
+  }
+});
+
+// Nối lại thành chuỗi Cookie hoàn chỉnh
+const resolvedCookie = Array.from(cookieMap.entries())
+  .map(([k, v]) => `${k}=${v}`)
+  .join('; ');
+```
+
+### Bước 5: Sử dụng Cookie để cào dữ liệu
+Lúc này, Backend đã có chuỗi `resolvedCookie` (chứa Session thật và `joomla_user_state=logged_in`).
+Backend chỉ cần đính kèm chuỗi này vào HTTP Header `Cookie` để cào bất kỳ trang nào.
+
+Ví dụ cào điểm thi:
+```javascript
+const gradesResponse = await fetch("https://ktdbcl.actvn.edu.vn/khao-thi/hvsv/xem-diem-thi.html", {
+  headers: {
+    "Cookie": resolvedCookie,
+    "User-Agent": "Mozilla/5.0 ...",
+    "Referer": "https://ktdbcl.actvn.edu.vn/home/gioi-thieu.html"
+  }
+});
+
+const html = await gradesResponse.text();
+// Sau đó dùng Cheerio / BeautifulSoup để bóc tách bảng điểm từ HTML
+```
+
+### Bước 6: Lưu trữ (Frontend)
+Sau khi Backend cào xong, Backend nên trả luôn chuỗi `resolvedCookie` này về cho Frontend (ví dụ thông qua API Response).
+Frontend sẽ lưu nó vào `localStorage`. Các lần sau, Frontend chỉ việc gửi chuỗi Cookie này lên Backend để tiếp tục cào điểm mà không cần người dùng đăng nhập lại (cho đến khi Session của trường bị hết hạn trên máy chủ).

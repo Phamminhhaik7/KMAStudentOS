@@ -1,13 +1,13 @@
 import { useMemo, useState } from 'react';
 import { useGpaData } from '@/hooks/use-gpa-data';
 import { calculateGpa } from '@/lib/utils';
-import { CookieDialog } from '@/components/cookie-dialog';
+import { AuthDialog } from '@/components/cookie-dialog';
 import { DashboardStats } from '@/components/dashboard-stats';
 import { GoalPlanner } from '@/components/goal-planner';
 import { SemesterCard } from '@/components/semester-card';
 import { AddSubjectDialog } from '@/components/add-subject-dialog';
 import { Button } from '@/components/ui/button';
-import { Loader2, Plus, RotateCcw, Settings, Server, RefreshCw, BookOpen } from 'lucide-react';
+import { Loader2, Plus, RotateCcw, Settings, Server, RefreshCw, BookOpen, GraduationCap } from 'lucide-react';
 import { Grade } from '@workspace/api-client-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -20,7 +20,6 @@ function AppContent() {
   const [cookieDialogOpen, setCookieDialogOpen] = useState(false);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
 
-  // Group grades by semester
   const semesters = useMemo(() => {
     const map = new Map<string, Grade[]>();
     grades.forEach(g => {
@@ -30,7 +29,6 @@ function AppContent() {
     });
 
     return Array.from(map.entries()).sort((a, b) => {
-      // Sort descending (newest first)
       const [yA, tA] = a[0].split('|');
       const [yB, tB] = b[0].split('|');
       if (yA !== yB) return yB.localeCompare(yA);
@@ -50,51 +48,51 @@ function AppContent() {
   if (isLoading && grades.length === 0) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-background text-foreground">
-        <Loader2 className="w-10 h-10 animate-spin text-primary mb-4" />
-        <p className="font-mono text-sm text-muted-foreground animate-pulse">Loading academy records...</p>
+        <Loader2 className="w-10 h-10 animate-spin text-primary mb-5" />
+        <p className="font-mono text-sm text-muted-foreground animate-pulse font-medium tracking-wide">Đang tải dữ liệu học tập...</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-[100dvh] bg-background text-foreground pb-20">
+    <div className="min-h-[100dvh] bg-background text-foreground pb-24">
       {/* Header */}
-      <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b border-border shadow-sm">
-        <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
+      <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-xl border-b border-border shadow-sm">
+        <div className="max-w-5xl mx-auto px-5 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded bg-primary text-primary-foreground flex items-center justify-center font-bold font-mono">
-              ACT
+            <div className="w-9 h-9 rounded-xl bg-primary text-primary-foreground flex items-center justify-center font-bold font-mono shadow-sm">
+              <GraduationCap className="w-5 h-5" />
             </div>
             <div>
-              <h1 className="font-bold text-foreground leading-tight hidden sm:block">Command Center</h1>
-              <div className="flex items-center gap-2 text-xs font-mono text-muted-foreground">
+              <h1 className="font-bold text-foreground leading-tight hidden sm:block tracking-tight">Hệ thống Quản lý Học tập</h1>
+              <div className="flex items-center gap-2 text-xs font-mono text-muted-foreground mt-0.5">
                 {userInfo ? (
                   <span className="font-semibold text-foreground/80">{userInfo.name} ({userInfo.id})</span>
                 ) : (
-                  <span>Guest User</span>
+                  <span>Khách</span>
                 )}
                 <span className="hidden sm:inline opacity-50">•</span>
-                <span className={`flex items-center gap-1 ${isLive ? 'text-emerald-600' : 'text-amber-600'}`}>
+                <span className={`flex items-center gap-1.5 font-semibold ${isLive ? 'text-emerald-600' : 'text-amber-600'}`}>
                   {isLive ? <Server className="w-3 h-3" /> : <RefreshCw className="w-3 h-3" />}
-                  {isLive ? 'Live' : 'Offline'}
+                  {isLive ? 'Trực tuyến' : 'Ngoại tuyến'}
                 </span>
               </div>
             </div>
           </div>
 
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={() => setCookieDialogOpen(true)} className="h-8 gap-2">
-              <Settings className="w-4 h-4" />
-              <span className="hidden sm:inline">Sync Portal</span>
+            <Button variant="outline" size="sm" onClick={() => setCookieDialogOpen(true)} className="h-9 gap-2 px-4 shadow-sm hover:bg-muted/50 border-border">
+              <Settings className="w-4 h-4 text-primary" />
+              <span className="hidden sm:inline font-semibold">Đồng bộ cổng thông tin</span>
             </Button>
           </div>
         </div>
       </header>
 
-      <main className="max-w-6xl mx-auto px-4 py-8">
+      <main className="max-w-5xl mx-auto px-5 py-10">
         <DashboardStats stats={overallStats} />
         
-        <div className="mb-10">
+        <div className="mb-12">
           <GoalPlanner 
             grades={grades} 
             currentGpa4={overallStats.gpa4} 
@@ -102,25 +100,25 @@ function AppContent() {
           />
         </div>
 
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex flex-col md:flex-row md:items-end justify-between mb-6 gap-4">
           <div>
-            <h2 className="text-xl font-bold text-foreground">Semester Breakdown</h2>
-            <p className="text-sm text-muted-foreground">Click values in tables to inline-edit scores. Auto-saves locally.</p>
+            <h2 className="text-2xl font-bold text-foreground tracking-tight mb-2">Chi tiết học kỳ</h2>
+            <p className="text-sm text-muted-foreground/80 font-medium">Nhấn vào điểm trong bảng để chỉnh sửa. Hệ thống tự động tính toán lại.</p>
           </div>
-          <div className="flex gap-3 items-center">
+          <div className="flex gap-3 items-center w-full md:w-auto">
             <AnimatePresence>
               {hasEdits && (
-                <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }}>
-                  <Button variant="ghost" size="sm" onClick={resetEdits} className="text-destructive hover:text-destructive hover:bg-destructive/10">
+                <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}>
+                  <Button variant="ghost" size="sm" onClick={resetEdits} className="text-destructive hover:text-destructive hover:bg-destructive/10 h-9 px-3 font-semibold">
                     <RotateCcw className="w-4 h-4 mr-2" />
-                    Reset Edits
+                    Đặt lại chỉnh sửa
                   </Button>
                 </motion.div>
               )}
             </AnimatePresence>
-            <Button size="sm" onClick={() => setAddDialogOpen(true)} className="bg-foreground text-background hover:bg-foreground/90">
+            <Button size="sm" onClick={() => setAddDialogOpen(true)} className="bg-foreground text-background hover:bg-foreground/90 h-9 shadow-md flex-1 md:flex-none font-semibold">
               <Plus className="w-4 h-4 mr-2" />
-              Add Planned Subject
+              Thêm môn dự kiến
             </Button>
           </div>
         </div>
@@ -139,18 +137,23 @@ function AppContent() {
           ))}
           
           {semesters.length === 0 && (
-            <div className="text-center py-20 bg-muted/30 border border-dashed rounded-xl">
-              <BookOpen className="w-10 h-10 text-muted-foreground mx-auto mb-4 opacity-50" />
-              <h3 className="text-lg font-semibold mb-1">No grades found</h3>
-              <p className="text-muted-foreground text-sm max-w-md mx-auto">
-                Paste your portal cookie to sync real data, or add planned subjects manually to start forecasting.
+            <div className="text-center py-24 bg-muted/20 border border-dashed rounded-2xl">
+              <div className="w-16 h-16 bg-muted border border-border/50 rounded-2xl flex items-center justify-center mx-auto mb-5 text-muted-foreground/50">
+                <BookOpen className="w-8 h-8" />
+              </div>
+              <h3 className="text-xl font-bold mb-2 text-foreground/80">Chưa có điểm</h3>
+              <p className="text-muted-foreground text-sm max-w-md mx-auto leading-relaxed">
+                Đăng nhập để đồng bộ dữ liệu thực tế từ hệ thống, hoặc thêm môn học dự kiến để bắt đầu tính toán điểm số.
               </p>
+              <Button onClick={() => setCookieDialogOpen(true)} variant="outline" className="mt-6 shadow-sm font-semibold">
+                Đồng bộ ngay
+              </Button>
             </div>
           )}
         </div>
       </main>
 
-      <CookieDialog 
+      <AuthDialog 
         open={cookieDialogOpen} 
         onOpenChange={setCookieDialogOpen}
         hasCookie={hasCookie}
