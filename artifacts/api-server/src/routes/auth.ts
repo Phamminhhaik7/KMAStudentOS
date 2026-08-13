@@ -10,12 +10,20 @@ const FETCH_TIMEOUT_MS = 10000;
 function extractCode(redirectUrl: string): string | null {
   try {
     const url = new URL(redirectUrl);
-    return url.searchParams.get("code");
+    // response_mode=fragment returns the code after a "#", which the
+    // browser never sends to a server — it only exists in the pasted URL
+    // text. Check the query string first, then fall back to the hash.
+    const fromQuery = url.searchParams.get("code");
+    if (fromQuery) return fromQuery;
+
+    const hash = url.hash.startsWith("#") ? url.hash.slice(1) : url.hash;
+    const hashParams = new URLSearchParams(hash);
+    return hashParams.get("code");
   } catch {
     // Not a well-formed absolute URL — the user may have pasted just the
-    // query string fragment (e.g. "code=...&session_state=..."). Recover a
-    // `code=` param from it; otherwise this isn't usable input.
-    const match = redirectUrl.match(/(?:^|[?&])code=([^&\s]+)/);
+    // query/fragment fragment (e.g. "code=...&session_state=..."). Recover
+    // a `code=` param from it; otherwise this isn't usable input.
+    const match = redirectUrl.match(/(?:^|[?&#])code=([^&\s]+)/);
     return match?.[1] ? decodeURIComponent(match[1]) : null;
   }
 }
