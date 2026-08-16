@@ -102,7 +102,8 @@ export function generateAllCalendarEvents(courses: TimetableCourse[]): CalendarE
   const events: CalendarEvent[] = [];
 
   courses.forEach((course) => {
-    course.schedules.forEach((schedule, schIdx) => {
+    const schedules = Array.isArray(course.schedules) ? course.schedules : [];
+    schedules.forEach((schedule, schIdx) => {
       if (!schedule.startDate || !schedule.endDate) return;
 
       const start = parseDate(schedule.startDate);

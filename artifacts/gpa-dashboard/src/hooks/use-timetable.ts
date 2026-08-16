@@ -170,7 +170,8 @@ export function useTimetable() {
     const slots: DayLessonSlot[] = [];
 
     effectiveTimetable.courses.forEach((course) => {
-      course.schedules.forEach((schedule) => {
+      const schedules = Array.isArray(course.schedules) ? course.schedules : [];
+      schedules.forEach((schedule) => {
         if (schedule.periods && schedule.periods.length > 0) {
           const sortedPeriods = [...schedule.periods].sort((a, b) => a - b);
           const periodStart = sortedPeriods[0];

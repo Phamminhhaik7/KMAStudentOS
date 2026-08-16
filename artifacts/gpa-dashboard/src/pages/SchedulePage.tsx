@@ -187,7 +187,7 @@ export function SchedulePage() {
   const courseColorMap = useMemo(() => {
     const map = new Map<string, (typeof EVENT_PALETTES)[0]>();
     if (timetable?.courses) {
-      timetable.courses.forEach((c, idx) => {
+      (Array.isArray(timetable.courses) ? timetable.courses : []).forEach((c, idx) => {
         const pal = EVENT_PALETTES[idx % EVENT_PALETTES.length];
         map.set(c.courseCode || c.stt, pal);
       });
