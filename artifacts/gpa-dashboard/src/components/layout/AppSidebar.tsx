@@ -186,7 +186,7 @@ export function AppSidebar({
         <div className="pt-1 px-1 flex items-center justify-between text-[10px] text-muted-foreground/80 font-mono">
           <Link href="/settings">
             <span className="hover:text-primary transition-colors cursor-pointer truncate">
-              Phát triển bởi Phạm Minh Hải
+              Phát triển bởi Gehihi
             </span>
           </Link>
           <span className="opacity-60">v2.2</span>

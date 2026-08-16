@@ -127,21 +127,21 @@ export function SettingsPage() {
             <div>
               <div className="flex items-center gap-2">
                 <h3 className="font-black text-base text-foreground">
-                  Phạm Minh Hải
+                  Sinh Viên Mật Mã
                 </h3>
                 <Badge className="bg-primary/10 text-primary border-primary/20 font-bold text-[10.5px] px-2 py-0.5 rounded-md">
-                  Developer
+                  Gehihi CODE
                 </Badge>
               </div>
               <p className="text-xs text-muted-foreground mt-0.5">
-                Sinh viên Học viện Kỹ thuật Mật mã • KMA CT10 - CNTT
+                Sinh viên Học viện Kỹ thuật Mật mã
               </p>
             </div>
           </div>
 
           <div className="flex items-center gap-2">
             <a
-              href="https://github.com/Phamminhhaik7"
+              href="https://github.com/Phamminhhaik7/KMAStudentOS"
               target="_blank"
               rel="noopener noreferrer"
             >
@@ -161,7 +161,7 @@ export function SettingsPage() {
         {/* Contact Links Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <a
-            href="mailto:minhhai.kma@gmail.com"
+            href="mailto:CT100127@actvn.edu.vn"
             className="p-3.5 rounded-xl bg-card border border-border hover:border-primary/30 hover:bg-primary/5 transition-all group flex items-center gap-3"
           >
             <div className="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
@@ -169,12 +169,12 @@ export function SettingsPage() {
             </div>
             <div className="min-w-0">
               <p className="text-[11px] text-muted-foreground font-medium">Email liên hệ</p>
-              <p className="text-xs font-bold text-foreground truncate">minhhai.kma@gmail.com</p>
+              <p className="text-xs font-bold text-foreground truncate">CT100127@actvn.edu.vn</p>
             </div>
           </a>
 
           <a
-            href="https://github.com/Phamminhhaik7/Web-Gateway"
+            href="https://github.com/Phamminhhaik7/KMAStudentOS"
             target="_blank"
             rel="noopener noreferrer"
             className="p-3.5 rounded-xl bg-card border border-border hover:border-primary/30 hover:bg-primary/5 transition-all group flex items-center gap-3"
@@ -184,12 +184,12 @@ export function SettingsPage() {
             </div>
             <div className="min-w-0">
               <p className="text-[11px] text-muted-foreground font-medium">Mã nguồn dự án</p>
-              <p className="text-xs font-bold text-foreground truncate">Web-Gateway Repository</p>
+              <p className="text-xs font-bold text-foreground truncate">KMAStudentOS Repo</p>
             </div>
           </a>
 
           <a
-            href="https://github.com/Phamminhhaik7/Web-Gateway/issues"
+            href="https://github.com/Phamminhhaik7/KMAStudentOS/issues"
             target="_blank"
             rel="noopener noreferrer"
             className="p-3.5 rounded-xl bg-card border border-border hover:border-primary/30 hover:bg-primary/5 transition-all group flex items-center gap-3"
