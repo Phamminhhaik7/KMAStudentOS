@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
-import { useGetGrades, getGetGradesQueryKey } from '@workspace/api-client-react';
+import { createContext, useContext, useState, useEffect, useCallback, useMemo, type ReactNode } from 'react';
+import { useGetGrades } from '@workspace/api-client-react';
 import { useQueryClient } from '@tanstack/react-query';
 import type { Grade, Subject, GradesResponseGpaScale, PortalUserInfo } from '@workspace/api-client-react';
 import { computeCourseGrade, getLetterGrade } from '../lib/utils';
@@ -16,7 +16,33 @@ interface CachedGpaData {
   timestamp: number;
 }
 
-export function useGpaData() {
+interface GpaContextType {
+  isLoading: boolean;
+  isError: boolean;
+  refetch: () => Promise<any>;
+  grades: Grade[];
+  subjects: Subject[];
+  gpaScale: GradesResponseGpaScale;
+  userInfo: PortalUserInfo | null;
+  isLive: boolean;
+  hasCookie: boolean;
+  saveCredentials: (newCookie: string, newUa: string) => void;
+  clearCredentials: () => void;
+  updateGrade: (stt: string, field: keyof Grade, value: string) => void;
+  deleteGrade: (stt: string) => void;
+  addPlannedSubject: (subject: Subject, term: string, year: string, examStr?: string, courseStr?: string) => void;
+  importSubjectsFromTimetable: (
+    courses: { subjectName: string; courseCode: string; credits: number }[],
+    year: string,
+    term: string
+  ) => number;
+  resetEdits: () => void;
+  hasEdits: boolean;
+}
+
+const GpaContext = createContext<GpaContextType | null>(null);
+
+export function GpaProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient();
 
   // Credentials
@@ -64,7 +90,7 @@ export function useGpaData() {
 
   const { data, isLoading, isError, refetch, isFetching } = useGetGrades({
     query: {
-      queryKey: getGetGradesQueryKey(),
+      queryKey: ['/grades', cookie, ua],
       refetchOnWindowFocus: false,
       staleTime: 1000 * 60 * 5,
     },
@@ -90,23 +116,26 @@ export function useGpaData() {
 
   const saveCredentials = useCallback(
     (newCookie: string, newUa: string) => {
+      localStorage.setItem('actvn_cookie', newCookie);
+      localStorage.setItem('actvn_ua', newUa);
       setCookie(newCookie);
       setUa(newUa);
+      queryClient.invalidateQueries();
       setTimeout(() => {
-        queryClient.invalidateQueries({ queryKey: getGetGradesQueryKey() });
-      }, 0);
+        refetch();
+      }, 50);
     },
-    [queryClient]
+    [queryClient, refetch]
   );
 
   const clearCredentials = useCallback(() => {
-    setCookie('');
-    setUa('');
     localStorage.removeItem('actvn_cookie');
     localStorage.removeItem('actvn_ua');
-    setTimeout(() => {
-      queryClient.invalidateQueries({ queryKey: getGetGradesQueryKey() });
-    }, 0);
+    localStorage.removeItem('actvn_cached_grades_data');
+    setCookie('');
+    setUa('');
+    setCachedData(null);
+    queryClient.invalidateQueries();
   }, [queryClient]);
 
   const updateGrade = useCallback(
@@ -274,7 +303,7 @@ export function useGpaData() {
     [baseGrades]
   );
 
-  return {
+  const value: GpaContextType = {
     isLoading: isLoading || isFetching,
     isError,
     refetch,
@@ -293,4 +322,14 @@ export function useGpaData() {
     resetEdits,
     hasEdits: Object.keys(localEdits).length > 0 || plannedSubjects.length > 0 || deletedStts.length > 0,
   };
+
+  return <GpaContext.Provider value={value}>{children}</GpaContext.Provider>;
+}
+
+export function useGpaData() {
+  const context = useContext(GpaContext);
+  if (!context) {
+    throw new Error('useGpaData must be used within a GpaProvider');
+  }
+  return context;
 }

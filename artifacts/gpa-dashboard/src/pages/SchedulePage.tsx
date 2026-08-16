@@ -121,8 +121,8 @@ export function SchedulePage() {
     }
   };
 
-  // View state: 'month' | 'week' | 'agenda' (default: 'month')
-  const [calendarView, setCalendarView] = useState<'month' | 'week' | 'agenda'>('month');
+  // View state: 'week' | 'month' | 'agenda' (default: 'week' as per modern calendar specs)
+  const [calendarView, setCalendarView] = useState<'week' | 'month' | 'agenda'>('week');
   
   // Month / Week view viewing base date
   const [currentViewDate, setCurrentViewDate] = useState<Date>(() => new Date());
@@ -280,61 +280,36 @@ export function SchedulePage() {
     return `${dayName}, ngày ${day}/${month}/${year}`;
   }, [selectedDate]);
 
-  // Sync to GPA Handler
-  const handleSyncToGpa = () => {
-    if (!timetable?.courses || timetable.courses.length === 0) {
-      toast({
-        variant: 'destructive',
-        title: 'Chưa có môn học',
-        description: 'Vui lòng đăng nhập QLĐT để tải thời khóa biểu trước khi đồng bộ.',
-      });
-      return;
+  // Auto-sync timetable courses into GPA calculation seamlessly without requiring button click
+  useEffect(() => {
+    if (timetable?.courses && timetable.courses.length > 0) {
+      const year = timetable.semesterYear || '2026_2027';
+      const term = timetable.semesterTerm || '1';
+      const coursesToImport = timetable.courses.map((c) => ({
+        subjectName: c.subjectName,
+        courseCode: c.courseCode,
+        credits: c.credits,
+      }));
+      importSubjectsFromTimetable(coursesToImport, year, term);
     }
-
-    const year = timetable.semesterYear || '2026_2027';
-    const term = timetable.semesterTerm || '1';
-
-    const coursesToImport = timetable.courses.map((c) => ({
-      subjectName: c.subjectName,
-      courseCode: c.courseCode,
-      credits: c.credits,
-    }));
-
-    const countAdded = importSubjectsFromTimetable(coursesToImport, year, term);
-
-    toast({
-      title: 'Đồng bộ môn học thành công! 🎉',
-      description: `Đã đưa ${countAdded > 0 ? `${countAdded} môn mới` : 'các môn'} vào Bảng tính GPA.`,
-      action: (
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={() => setLocation('/')}
-          className="font-bold text-xs border-primary/40 gap-1 text-primary"
-        >
-          <GraduationCap className="w-3.5 h-3.5" />
-          Xem GPA
-        </Button>
-      ),
-    });
-  };
+  }, [timetable?.courses, timetable?.semesterYear, timetable?.semesterTerm, importSubjectsFromTimetable]);
 
   const hasCourses = timetable?.courses && timetable.courses.length > 0;
 
   return (
-    <div className="min-h-[100dvh] bg-background text-foreground pb-24">
-      <NavigationHeader
-        studentName={timetable?.studentName}
-        studentId={timetable?.studentId}
-        isLive={timetable?.isLive}
-        portalTitle="Đăng nhập QLĐT"
-        onOpenPortalSettings={() => setLoginDialogOpen(true)}
-        courseCount={timetable?.courses?.length}
-        onSyncData={handleSyncSchedule}
-        isSyncing={isSyncing}
-      />
-
-      <main className="max-w-6xl mx-auto px-3 sm:px-6 py-4 sm:py-6 space-y-4 sm:space-y-6">
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-card p-5 sm:p-6 rounded-2xl border border-border shadow-xs">
+        <div>
+          <h1 className="text-xl sm:text-2xl font-black text-foreground tracking-tight flex items-center gap-2">
+            <CalendarIcon className="w-6 h-6 text-brand" />
+            Lịch Học & Thời Khóa Biểu
+          </h1>
+          <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
+            Thời khóa biểu các học phần đăng ký tại Cổng Đào tạo QLĐT ACTVN
+          </p>
+        </div>
+      </div>
         {/* Banner: Hôm nay ngày bao nhiêu & Hôm nay học ở đâu (Loket Compact & High Impact) */}
         <Card className="border-border bg-card shadow-xs overflow-hidden rounded-2xl">
           <CardContent className="p-3.5 sm:p-5">
@@ -470,19 +445,6 @@ export function SchedulePage() {
             <h2 className="text-sm sm:text-lg font-black tracking-tight text-foreground text-center truncate">
               {calendarTitleText}
             </h2>
-
-            {/* Sync GPA Action */}
-            {hasCourses && (
-              <Button
-                onClick={handleSyncToGpa}
-                size="sm"
-                variant="outline"
-                className="h-8 font-bold text-xs gap-1 shadow-2xs rounded-xl px-2.5 border-border hover:bg-muted shrink-0 hidden sm:flex"
-              >
-                <Sparkles className="w-3.5 h-3.5 text-primary" />
-                <span>Đồng bộ GPA</span>
-              </Button>
-            )}
           </div>
 
           {/* Row 2: Responsive Segmented Control for Views */}
@@ -527,18 +489,6 @@ export function SchedulePage() {
                 <span>Lịch biểu</span>
               </button>
             </div>
-
-            {hasCourses && (
-              <Button
-                onClick={handleSyncToGpa}
-                size="sm"
-                variant="outline"
-                className="h-9 font-bold text-xs gap-1 shadow-2xs rounded-xl px-2.5 border-border hover:bg-muted shrink-0 sm:hidden"
-                title="Đồng bộ môn vào bảng điểm GPA"
-              >
-                <Sparkles className="w-3.5 h-3.5 text-primary" />
-              </Button>
-            )}
           </div>
         </div>
 
@@ -1086,9 +1036,8 @@ export function SchedulePage() {
             )}
           </div>
         )}
-      </main>
 
-      {/* EVENT DETAIL MODAL (Responsive Dialog) */}
+        {/* EVENT DETAIL MODAL (Responsive Dialog) */}
       <Dialog
         open={!!selectedEventDetail}
         onOpenChange={(open) => !open && setSelectedEventDetail(null)}

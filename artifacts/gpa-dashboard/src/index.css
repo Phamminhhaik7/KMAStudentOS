@@ -46,47 +46,87 @@
 }
 
 :root {
-  /* Loket Design Tokens - Crisp Obsidian, Soft Slate & High Contrast */
-  --background: 215 25% 97%;          /* #f1f5f9 */
-  --foreground: 240 10% 9%;           /* #151416 */
+  /* Modern Academic OS Tokens (Linear, Notion, Apple) */
+  --background: 220 14% 97.5%;        /* #F7F8FA */
+  --foreground: 228 10% 10%;          /* #17181C */
 
-  --card: 0 0% 100%;                  /* #ffffff */
-  --card-foreground: 240 10% 9%;      /* #151416 */
-  --card-border: 214 20% 90%;         /* #e2e8f0 */
+  --card: 0 0% 100%;                  /* #FFFFFF */
+  --card-foreground: 228 10% 10%;     /* #17181C */
+  --card-border: 220 13% 92%;         /* #E7E9EE */
 
   --popover: 0 0% 100%;
-  --popover-foreground: 240 10% 9%;
-  --popover-border: 214 20% 90%;
+  --popover-foreground: 228 10% 10%;
+  --popover-border: 220 13% 92%;
 
-  --primary: 240 10% 9%;              /* #151416 - Loket Obsidian Primary */
-  --primary-foreground: 0 0% 100%;    /* #ffffff */
+  --primary: 228 17% 8%;              /* #111318 - Obsidian */
+  --primary-foreground: 0 0% 100%;    /* #FFFFFF */
 
-  --secondary: 210 20% 94%;           /* #eef2f6 */
-  --secondary-foreground: 240 10% 15%;
+  --brand: 243 100% 68%;              /* #635BFF - Modern Indigo */
+  --brand-foreground: 0 0% 100%;
 
-  --muted: 210 20% 94%;
-  --muted-foreground: 215 16% 45%;    /* #64748b */
+  --secondary: 220 13% 94%;           /* #EEF0F4 */
+  --secondary-foreground: 228 10% 15%;
 
-  --accent: 210 30% 92%;
-  --accent-foreground: 240 10% 9%;
+  --muted: 220 13% 94%;
+  --muted-foreground: 220 9% 46%;     /* #6B7280 */
 
-  --destructive: 0 72% 51%;
+  --accent: 243 100% 97%;             /* #F0EFFF */
+  --accent-foreground: 243 100% 60%;  /* #5345E7 */
+
+  --success: 160 84% 39%;             /* #10B981 */
+  --warning: 38 92% 50%;              /* #F59E0B */
+  --destructive: 0 84% 60%;           /* #EF4444 */
   --destructive-foreground: 0 0% 100%;
 
-  --border: 214 20% 89%;              /* #e2e8f0 */
-  --input: 214 20% 88%;
-  --ring: 240 10% 9%;
+  --border: 220 13% 92%;              /* #E7E9EE */
+  --input: 220 13% 90%;
+  --ring: 243 100% 68%;
 
-  --radius: 0.75rem;                  /* 12px lg radius from Loket */
+  --radius: 1rem;                     /* 16px card radius */
+}
+
+.dark {
+  --background: 228 17% 7%;
+  --foreground: 220 14% 97%;
+
+  --card: 228 15% 10%;
+  --card-foreground: 220 14% 97%;
+  --card-border: 228 12% 16%;
+
+  --popover: 228 15% 10%;
+  --popover-foreground: 220 14% 97%;
+  --popover-border: 228 12% 16%;
+
+  --primary: 0 0% 100%;
+  --primary-foreground: 228 17% 8%;
+
+  --brand: 243 100% 68%;
+  --brand-foreground: 0 0% 100%;
+
+  --secondary: 228 12% 16%;
+  --secondary-foreground: 220 14% 90%;
+
+  --muted: 228 12% 15%;
+  --muted-foreground: 220 9% 60%;
+
+  --accent: 243 60% 20%;
+  --accent-foreground: 243 100% 75%;
+
+  --border: 228 12% 16%;
+  --input: 228 12% 18%;
+  --ring: 243 100% 68%;
 }
 
 @layer base {
   * {
-    @apply border-border;
+    border-color: hsl(var(--border));
   }
-
   body {
-    @apply font-sans antialiased bg-background text-foreground selection:bg-primary/15 selection:text-primary min-h-[100dvh];
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    @apply selection:bg-primary/15 selection:text-primary min-h-[100dvh];
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   }
 }

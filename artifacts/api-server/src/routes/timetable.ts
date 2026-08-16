@@ -58,4 +58,20 @@ router.get("/timetable", async (req: Request, res: ExpressResponse): Promise<voi
   }
 });
 
+router.get("/curriculum", async (req: Request, res: ExpressResponse): Promise<void> => {
+  try {
+    const customCookie = req.header("X-Qldt-Cookie");
+    const { fetchCurriculumFromPortal } = await import("../lib/qldt-client");
+    const { isLive, data } = await fetchCurriculumFromPortal(customCookie);
+
+    res.json({
+      isLive,
+      data,
+    });
+  } catch (err) {
+    req.log?.error?.({ err }, "Error fetching curriculum");
+    res.status(500).json({ error: "Không thể lấy chương trình đào tạo." });
+  }
+});
+
 export default router;

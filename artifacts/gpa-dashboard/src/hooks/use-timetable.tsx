@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
-import { useGetTimetable, getGetTimetableQueryKey, useLoginQldt } from '@workspace/api-client-react';
+import { createContext, useContext, useState, useEffect, useCallback, useMemo, type ReactNode } from 'react';
+import { useGetTimetable, useLoginQldt } from '@workspace/api-client-react';
 import type { TimetableResponse, TimetableCourse, TimetableScheduleItem } from '@workspace/api-client-react';
 import { useQueryClient } from '@tanstack/react-query';
 
@@ -15,7 +15,30 @@ interface QldtCredentials {
   password: string;
 }
 
-export function useTimetable() {
+interface TimetableContextType {
+  timetable: TimetableResponse | null;
+  isLoading: boolean;
+  isFetching: boolean;
+  isError: boolean;
+  isLive: boolean;
+  hasCookie: boolean;
+  savedUsername: string;
+  selectedSemester: string;
+  setSelectedSemester: (semId: string) => void;
+  login: (username: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  saveCookieDirectly: (cookie: string) => void;
+  logout: () => void;
+  syncTimetable: () => Promise<{
+    success: boolean;
+    reauthenticated: boolean;
+    requireLogin: boolean;
+    error?: string;
+  }>;
+}
+
+const TimetableContext = createContext<TimetableContextType | null>(null);
+
+export function TimetableProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient();
 
   const [cookie, setCookie] = useState<string>(() => localStorage.getItem('actvn_qldt_cookie') || '');
@@ -51,7 +74,7 @@ export function useTimetable() {
     queryParams,
     {
       query: {
-        queryKey: getGetTimetableQueryKey(queryParams),
+        queryKey: ['/timetable', cookie, selectedSemester],
         refetchOnWindowFocus: false,
         staleTime: 1000 * 60 * 5,
       },
@@ -80,11 +103,15 @@ export function useTimetable() {
         });
 
         if (res.cookie) {
+          localStorage.setItem('actvn_qldt_cookie', res.cookie);
           setCookie(res.cookie);
           const creds: QldtCredentials = { username, password };
           setSavedCreds(creds);
           localStorage.setItem('actvn_qldt_credentials', JSON.stringify(creds));
-          queryClient.invalidateQueries({ queryKey: ['/api/timetable'] });
+          queryClient.invalidateQueries();
+          setTimeout(() => {
+            refetch();
+          }, 50);
           return { success: true };
         }
         return { success: false, error: 'Không nhận được phiên đăng nhập hợp lệ.' };
@@ -93,20 +120,26 @@ export function useTimetable() {
         return { success: false, error: message };
       }
     },
-    [loginMutation, queryClient]
+    [loginMutation, queryClient, refetch]
   );
 
   const saveCookieDirectly = useCallback((newCookie: string) => {
+    localStorage.setItem('actvn_qldt_cookie', newCookie.trim());
     setCookie(newCookie.trim());
-    queryClient.invalidateQueries({ queryKey: ['/api/timetable'] });
-  }, [queryClient]);
+    queryClient.invalidateQueries();
+    setTimeout(() => {
+      refetch();
+    }, 50);
+  }, [queryClient, refetch]);
 
   const logout = useCallback(() => {
-    setCookie('');
     localStorage.removeItem('actvn_qldt_cookie');
     localStorage.removeItem('actvn_qldt_credentials');
+    localStorage.removeItem('actvn_cached_timetable');
+    setCookie('');
     setSavedCreds(null);
-    queryClient.invalidateQueries({ queryKey: ['/api/timetable'] });
+    setCachedTimetable(null);
+    queryClient.invalidateQueries();
   }, [queryClient]);
 
   // Unified sync method that auto-relies on saved credentials when expired
@@ -118,114 +151,71 @@ export function useTimetable() {
   }> => {
     try {
       const result = await refetch();
-
-      // If fetch gave valid live courses
-      if (result.data?.isLive && result.data.courses && result.data.courses.length > 0) {
+      if (result.data?.isLive && result.data.courses.length > 0) {
         return { success: true, reauthenticated: false, requireLogin: false };
       }
 
-      // If not live or expired session, attempt auto-relogin using saved credentials
-      const credsRaw = localStorage.getItem('actvn_qldt_credentials');
-      if (credsRaw) {
-        const creds: QldtCredentials = JSON.parse(credsRaw);
-        if (creds.username && creds.password) {
-          const loginRes = await loginMutation.mutateAsync({
-            data: { username: creds.username, password: creds.password },
-          });
-
-          if (loginRes.cookie) {
-            setCookie(loginRes.cookie);
-            localStorage.setItem('actvn_qldt_cookie', loginRes.cookie);
-            await queryClient.invalidateQueries({ queryKey: ['/api/timetable'] });
+      // If session expired and credentials saved, auto-relogin
+      if (savedCreds?.username && savedCreds?.password) {
+        const reLoginRes = await handleLogin(savedCreds.username, savedCreds.password);
+        if (reLoginRes.success) {
+          const secondResult = await refetch();
+          if (secondResult.data?.isLive) {
             return { success: true, reauthenticated: true, requireLogin: false };
           }
         }
       }
 
-      return { success: false, reauthenticated: false, requireLogin: true };
-    } catch (err: any) {
       return {
         success: false,
         reauthenticated: false,
         requireLogin: true,
-        error: err?.message || 'Không thể đồng bộ thời khóa biểu.',
+        error: 'Phiên đăng nhập QLĐT đã hết hạn. Vui lòng đăng nhập lại.',
+      };
+    } catch (err: any) {
+      return {
+        success: false,
+        reauthenticated: false,
+        requireLogin: false,
+        error: err?.message || 'Không thể kết nối đến Cổng QLĐT.',
       };
     }
-  }, [refetch, loginMutation, queryClient]);
+  }, [refetch, savedCreds, handleLogin]);
 
-  // Effective timetable: live API data if available with courses, otherwise cached data
-  const effectiveTimetable = useMemo((): TimetableResponse | undefined => {
-    if (data && data.courses && data.courses.length > 0) {
+  // Active timetable data (live -> cached -> null)
+  const activeTimetable = useMemo(() => {
+    if (data?.isLive && data.courses && data.courses.length > 0) {
       return data;
     }
     if (cachedTimetable && cachedTimetable.courses && cachedTimetable.courses.length > 0) {
       return cachedTimetable;
     }
-    return data;
+    return data || cachedTimetable || null;
   }, [data, cachedTimetable]);
 
-  // Flattened schedules
-  const allScheduledSlots = useMemo((): DayLessonSlot[] => {
-    if (!effectiveTimetable?.courses) return [];
-    const slots: DayLessonSlot[] = [];
-
-    effectiveTimetable.courses.forEach((course) => {
-      const schedules = Array.isArray(course.schedules) ? course.schedules : [];
-      schedules.forEach((schedule) => {
-        if (schedule.periods && schedule.periods.length > 0) {
-          const sortedPeriods = [...schedule.periods].sort((a, b) => a - b);
-          const periodStart = sortedPeriods[0];
-          const periodCount = sortedPeriods.length;
-
-          slots.push({
-            course,
-            schedule,
-            periodStart,
-            periodCount,
-          });
-        }
-      });
-    });
-
-    return slots;
-  }, [effectiveTimetable?.courses]);
-
-  // Group slots by Day of Week
-  const scheduleByDay = useMemo(() => {
-    const map = new Map<number, DayLessonSlot[]>();
-    for (let day = 2; day <= 8; day++) {
-      map.set(day, []);
-    }
-
-    allScheduledSlots.forEach((slot) => {
-      const day = slot.schedule.dayOfWeek;
-      if (map.has(day)) {
-        map.get(day)!.push(slot);
-      }
-    });
-
-    map.forEach((slots) => {
-      slots.sort((a, b) => a.periodStart - b.periodStart);
-    });
-
-    return map;
-  }, [allScheduledSlots]);
-
-  return {
-    timetable: effectiveTimetable,
-    isLoading: isLoading || isFetching,
+  const value: TimetableContextType = {
+    timetable: activeTimetable,
+    isLoading,
+    isFetching,
     isError,
-    refetch,
-    syncTimetable,
+    isLive: data?.isLive || false,
     hasCookie: !!cookie,
-    hasSavedCredentials: !!savedCreds,
+    savedUsername: savedCreds?.username || '',
     selectedSemester,
     setSelectedSemester,
     login: handleLogin,
     saveCookieDirectly,
     logout,
-    scheduleByDay,
-    allScheduledSlots,
-    isLoggingIn: loginMutation.isPending,
+    syncTimetable,
   };
+
+  return <TimetableContext.Provider value={value}>{children}</TimetableContext.Provider>;
+}
+
+export function useTimetable() {
+  const context = useContext(TimetableContext);
+  if (!context) {
+    throw new Error('useTimetable must be used within a TimetableProvider');
+  }
+  return context;
 }

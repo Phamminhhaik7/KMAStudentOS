@@ -301,3 +301,44 @@ export async function fetchTimetableFromPortal(
 
   return { isLive: false, data: EMPTY_TIMETABLE_DATA };
 }
+
+const QLDT_CURRICULUM_URL = "http://qldt.actvn.edu.vn/CMCSoft.IU.Web.Info/CourseByFieldTree.aspx";
+
+export async function fetchCurriculumFromPortal(
+  cookie: string | undefined
+): Promise<{ isLive: boolean; data: import("./parse-curriculum-html").ParsedCurriculum | null }> {
+  if (!cookie) {
+    return { isLive: false, data: null };
+  }
+
+  const headers = {
+    "User-Agent": DEFAULT_USER_AGENT,
+    Cookie: cookie,
+    Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+    "Accept-Language": "vi,en-US;q=0.9,en;q=0.8",
+    Referer: "http://qldt.actvn.edu.vn/CMCSoft.IU.Web.Info/Home.aspx",
+  };
+
+  const res = await fetchWithTimeout(QLDT_CURRICULUM_URL, {
+    method: "GET",
+    headers,
+  });
+
+  if (!res || !res.ok) {
+    return { isLive: false, data: null };
+  }
+
+  const html = await res.text();
+  if (!html.includes("tblCourse")) {
+    return { isLive: false, data: null };
+  }
+
+  try {
+    const { parseCurriculumHtml } = await import("./parse-curriculum-html");
+    const data = parseCurriculumHtml(html);
+    return { isLive: true, data };
+  } catch {
+    return { isLive: false, data: null };
+  }
+}
+
