@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap');
 
 @import 'tailwindcss';
 @import 'tw-animate-css';
@@ -24,6 +24,9 @@
   --color-primary: hsl(var(--primary));
   --color-primary-foreground: hsl(var(--primary-foreground));
 
+  --color-brand: hsl(var(--brand));
+  --color-brand-foreground: hsl(var(--brand-foreground));
+
   --color-secondary: hsl(var(--secondary));
   --color-secondary-foreground: hsl(var(--secondary-foreground));
 
@@ -36,7 +39,7 @@
   --color-destructive: hsl(var(--destructive));
   --color-destructive-foreground: hsl(var(--destructive-foreground));
 
-  --font-sans: 'Plus Jakarta Sans', sans-serif;
+  --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
 
   --radius-sm: calc(var(--radius) - 4px);
@@ -46,75 +49,75 @@
 }
 
 :root {
-  /* Modern Academic OS Tokens (Linear, Notion, Apple) */
-  --background: 220 14% 97.5%;        /* #F7F8FA */
-  --foreground: 228 10% 10%;          /* #17181C */
+  /* KMA Crimson & Obsidian Precision Design System */
+  --background: 240 10% 98.5%;        /* #FAFAFC */
+  --foreground: 222 47% 11%;          /* #0F172A */
 
   --card: 0 0% 100%;                  /* #FFFFFF */
-  --card-foreground: 228 10% 10%;     /* #17181C */
-  --card-border: 220 13% 92%;         /* #E7E9EE */
+  --card-foreground: 222 47% 11%;     /* #0F172A */
+  --card-border: 220 13% 91%;         /* #E2E8F0 */
 
   --popover: 0 0% 100%;
-  --popover-foreground: 228 10% 10%;
-  --popover-border: 220 13% 92%;
+  --popover-foreground: 222 47% 11%;
+  --popover-border: 220 13% 91%;
 
-  --primary: 228 17% 8%;              /* #111318 - Obsidian */
+  --primary: 346 84% 48%;             /* #E11D48 - Vibrant KMA Crimson Red */
   --primary-foreground: 0 0% 100%;    /* #FFFFFF */
 
-  --brand: 243 100% 68%;              /* #635BFF - Modern Indigo */
+  --brand: 346 84% 48%;               /* #E11D48 */
   --brand-foreground: 0 0% 100%;
 
-  --secondary: 220 13% 94%;           /* #EEF0F4 */
-  --secondary-foreground: 228 10% 15%;
+  --secondary: 346 40% 96%;           /* #FFF1F3 - Subtle rose tint */
+  --secondary-foreground: 346 80% 38%;/* #9F1239 */
 
-  --muted: 220 13% 94%;
-  --muted-foreground: 220 9% 46%;     /* #6B7280 */
+  --muted: 220 14% 96%;               /* #F1F5F9 */
+  --muted-foreground: 215 16% 47%;    /* #64748B */
 
-  --accent: 243 100% 97%;             /* #F0EFFF */
-  --accent-foreground: 243 100% 60%;  /* #5345E7 */
+  --accent: 346 80% 95%;              /* #FFE4E8 */
+  --accent-foreground: 346 84% 40%;   /* #BE123C */
 
-  --success: 160 84% 39%;             /* #10B981 */
+  --success: 158 75% 38%;             /* #10B981 */
   --warning: 38 92% 50%;              /* #F59E0B */
   --destructive: 0 84% 60%;           /* #EF4444 */
   --destructive-foreground: 0 0% 100%;
 
-  --border: 220 13% 92%;              /* #E7E9EE */
-  --input: 220 13% 90%;
-  --ring: 243 100% 68%;
+  --border: 220 13% 91%;              /* #E2E8F0 */
+  --input: 220 13% 89%;
+  --ring: 346 84% 48%;
 
-  --radius: 1rem;                     /* 16px card radius */
+  --radius: 0.875rem;                 /* 14px modern card radius */
 }
 
 .dark {
-  --background: 228 17% 7%;
-  --foreground: 220 14% 97%;
+  --background: 240 10% 4.5%;         /* #0B0C0E Deep Obsidian */
+  --foreground: 210 40% 98%;          /* #F8FAFC */
 
-  --card: 228 15% 10%;
-  --card-foreground: 220 14% 97%;
-  --card-border: 228 12% 16%;
+  --card: 240 7% 8.5%;                /* #13151A High Contrast Dark */
+  --card-foreground: 210 40% 98%;
+  --card-border: 240 5% 16%;          /* #242730 */
 
-  --popover: 228 15% 10%;
-  --popover-foreground: 220 14% 97%;
-  --popover-border: 228 12% 16%;
+  --popover: 240 7% 8.5%;
+  --popover-foreground: 210 40% 98%;
+  --popover-border: 240 5% 16%;
 
-  --primary: 0 0% 100%;
-  --primary-foreground: 228 17% 8%;
+  --primary: 346 84% 53%;             /* #F43F5E - Luminous Crimson */
+  --primary-foreground: 0 0% 100%;
 
-  --brand: 243 100% 68%;
+  --brand: 346 84% 53%;
   --brand-foreground: 0 0% 100%;
 
-  --secondary: 228 12% 16%;
-  --secondary-foreground: 220 14% 90%;
+  --secondary: 346 35% 14%;           /* #37101B */
+  --secondary-foreground: 346 90% 88%;/* #FECDD3 */
 
-  --muted: 228 12% 15%;
-  --muted-foreground: 220 9% 60%;
+  --muted: 240 5% 13%;                /* #1E2028 */
+  --muted-foreground: 215 20% 65%;    /* #94A3B8 */
 
-  --accent: 243 60% 20%;
-  --accent-foreground: 243 100% 75%;
+  --accent: 346 45% 16%;              /* #4C0E20 */
+  --accent-foreground: 346 90% 85%;
 
-  --border: 228 12% 16%;
-  --input: 228 12% 18%;
-  --ring: 243 100% 68%;
+  --border: 240 5% 16%;               /* #242730 */
+  --input: 240 5% 18%;
+  --ring: 346 84% 53%;
 }
 
 @layer base {
@@ -126,7 +129,28 @@
     color: hsl(var(--foreground));
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
-    @apply selection:bg-primary/15 selection:text-primary min-h-[100dvh];
+    @apply selection:bg-primary/20 selection:text-primary min-h-[100dvh];
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   }
+}
+
+/* Custom Precision Glass & Micro Accents */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.dark .glass-panel {
+  background: rgba(19, 21, 26, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.crimson-glow {
+  box-shadow: 0 8px 24px -6px rgba(225, 29, 72, 0.22);
+}
+
+.dark .crimson-glow {
+  box-shadow: 0 8px 28px -6px rgba(244, 63, 94, 0.3);
 }

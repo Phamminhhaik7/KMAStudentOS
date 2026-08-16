@@ -112,12 +112,12 @@ export function AnalyticsPage() {
   const GRADE_COLORS: Record<string, string> = {
     'A+': '#10B981',
     A: '#10B981',
-    'B+': '#635BFF',
-    B: '#635BFF',
+    'B+': '#E11D48',
+    B: '#E11D48',
     'C+': '#F59E0B',
     C: '#F59E0B',
-    'D+': '#EF4444',
-    D: '#EF4444',
+    'D+': '#FB7185',
+    D: '#FB7185',
     F: '#991B1B',
   };
 
@@ -127,7 +127,7 @@ export function AnalyticsPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-card p-5 sm:p-6 rounded-2xl border border-border shadow-xs">
         <div>
           <h1 className="text-xl sm:text-2xl font-black text-foreground tracking-tight flex items-center gap-2">
-            <BarChart3 className="w-6 h-6 text-brand" />
+            <BarChart3 className="w-6 h-6 text-primary" />
             Thống kê & Phân tích Học tập
           </h1>
           <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
@@ -147,7 +147,7 @@ export function AnalyticsPage() {
         {/* Chart 1: GPA Trend */}
         <div className="bg-card rounded-2xl border border-border shadow-xs p-5 space-y-3">
           <div className="flex items-center gap-2">
-            <TrendingUp className="w-4 h-4 text-brand" />
+            <TrendingUp className="w-4 h-4 text-primary" />
             <h3 className="font-extrabold text-sm text-foreground">
               Biểu đồ GPA theo từng học kỳ
             </h3>
@@ -161,8 +161,8 @@ export function AnalyticsPage() {
               <AreaChart data={semestersData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <defs>
                   <linearGradient id="analyticsGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#635BFF" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="#635BFF" stopOpacity={0.0} />
+                    <stop offset="5%" stopColor="#E11D48" stopOpacity={0.35} />
+                    <stop offset="95%" stopColor="#E11D48" stopOpacity={0.0} />
                   </linearGradient>
                 </defs>
                 <XAxis dataKey="label" stroke="#94a3b8" fontSize={10} tickLine={false} />
@@ -171,7 +171,7 @@ export function AnalyticsPage() {
                   contentStyle={{
                     backgroundColor: '#111318',
                     borderRadius: '12px',
-                    border: 'none',
+                    border: '1px solid #242730',
                     color: '#ffffff',
                     fontSize: '12px',
                     fontWeight: 'bold',
@@ -180,7 +180,7 @@ export function AnalyticsPage() {
                 <Area
                   type="monotone"
                   dataKey="gpaCum"
-                  stroke="#635BFF"
+                  stroke="#E11D48"
                   strokeWidth={2.5}
                   fillOpacity={1}
                   fill="url(#analyticsGrad)"
@@ -229,7 +229,7 @@ export function AnalyticsPage() {
                 />
                 <Bar dataKey="count" radius={[6, 6, 0, 0]} name="Số môn">
                   {gradeDistribution.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={GRADE_COLORS[entry.grade] || '#635BFF'} />
+                    <Cell key={`cell-${index}`} fill={GRADE_COLORS[entry.grade] || '#E11D48'} />
                   ))}
                 </Bar>
               </BarChart>

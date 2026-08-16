@@ -169,7 +169,7 @@ export function AppSidebar({
 
         {/* User Mini Card */}
         <div className="px-3 py-2 rounded-xl bg-muted/40 border border-border/60 flex items-center gap-2.5 mt-1">
-          <div className="w-8 h-8 rounded-lg bg-primary text-primary-foreground flex items-center justify-center font-bold text-xs shrink-0">
+          <div className="w-8 h-8 rounded-lg bg-primary text-primary-foreground flex items-center justify-center font-bold text-xs shrink-0 shadow-xs">
             {studentName ? studentName.charAt(0).toUpperCase() : 'S'}
           </div>
           <div className="min-w-0 flex-1">
@@ -180,6 +180,16 @@ export function AppSidebar({
               {studentId || 'Chưa đăng nhập'}
             </p>
           </div>
+        </div>
+
+        {/* Developer Attribution */}
+        <div className="pt-1 px-1 flex items-center justify-between text-[10px] text-muted-foreground/80 font-mono">
+          <Link href="/settings">
+            <span className="hover:text-primary transition-colors cursor-pointer truncate">
+              Phát triển bởi Phạm Minh Hải
+            </span>
+          </Link>
+          <span className="opacity-60">v2.2</span>
         </div>
       </div>
     </aside>

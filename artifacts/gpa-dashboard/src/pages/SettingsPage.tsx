@@ -4,7 +4,6 @@ import { useTimetable } from '@/hooks/use-timetable';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
 import {
   Settings,
   RefreshCw,
@@ -17,6 +16,13 @@ import {
   User,
   Shield,
   Loader2,
+  Github,
+  Mail,
+  MessageCircle,
+  ExternalLink,
+  Sparkles,
+  Heart,
+  Code2,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { QldtLoginDialog } from '@/components/qldt-login-dialog';
@@ -85,8 +91,9 @@ export function SettingsPage() {
     if (confirm('Bạn có chắc chắn muốn xóa toàn bộ bộ nhớ đệm cục bộ không?')) {
       localStorage.removeItem('actvn_qldt_credentials');
       localStorage.removeItem('actvn_qldt_cached_timetable');
-      localStorage.removeItem('kma_academic_tasks_v1');
-      localStorage.removeItem('kma_academic_exams_v1');
+      localStorage.removeItem('kma_academic_tasks_v2');
+      localStorage.removeItem('kma_academic_exams_v2');
+      localStorage.removeItem('kma_academic_notifications_v2');
       toast({
         title: 'Đã xóa bộ nhớ đệm thành công',
         description: 'Tải lại trang để áp dụng.',
@@ -96,25 +103,122 @@ export function SettingsPage() {
   };
 
   return (
-    <div className="space-y-6 max-w-4xl">
+    <div className="space-y-6 max-w-4xl pb-10">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-card p-5 sm:p-6 rounded-2xl border border-border shadow-xs">
         <div>
           <h1 className="text-xl sm:text-2xl font-black text-foreground tracking-tight flex items-center gap-2">
-            <Settings className="w-6 h-6 text-brand" />
-            Cài đặt & Trung tâm Đồng bộ (Sync Center)
+            <Settings className="w-6 h-6 text-primary" />
+            Cài đặt & Trung tâm Hệ thống
           </h1>
           <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
-            Quản lý kết nối Cổng Đào tạo (QLĐT), Khảo thí và dữ liệu cá nhân
+            Quản lý kết nối Cổng Đào tạo (QLĐT), Khảo thí, thông tin tác giả và dữ liệu
           </p>
         </div>
       </div>
+
+      {/* Developer & Contact Card (Tác giả & Liên hệ) */}
+      <Card className="border-primary/20 bg-gradient-to-br from-card via-card to-primary/5 rounded-2xl shadow-xs p-5 sm:p-6 space-y-5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/80 pb-4">
+          <div className="flex items-center gap-3.5">
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary to-primary/70 text-white flex items-center justify-center font-black text-lg shadow-sm shadow-primary/20 shrink-0">
+              MH
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="font-black text-base text-foreground">
+                  Phạm Minh Hải
+                </h3>
+                <Badge className="bg-primary/10 text-primary border-primary/20 font-bold text-[10.5px] px-2 py-0.5 rounded-md">
+                  Developer
+                </Badge>
+              </div>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Sinh viên Học viện Kỹ thuật Mật mã • KMA CT10 - CNTT
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <a
+              href="https://github.com/Phamminhhaik7"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8.5 text-xs font-bold gap-1.5 rounded-xl border-border hover:border-primary/40 hover:text-primary transition-all cursor-pointer"
+              >
+                <Github className="w-4 h-4" />
+                <span>GitHub</span>
+                <ExternalLink className="w-3 h-3 opacity-60" />
+              </Button>
+            </a>
+          </div>
+        </div>
+
+        {/* Contact Links Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <a
+            href="mailto:minhhai.kma@gmail.com"
+            className="p-3.5 rounded-xl bg-card border border-border hover:border-primary/30 hover:bg-primary/5 transition-all group flex items-center gap-3"
+          >
+            <div className="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+              <Mail className="w-4 h-4" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-[11px] text-muted-foreground font-medium">Email liên hệ</p>
+              <p className="text-xs font-bold text-foreground truncate">minhhai.kma@gmail.com</p>
+            </div>
+          </a>
+
+          <a
+            href="https://github.com/Phamminhhaik7/Web-Gateway"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="p-3.5 rounded-xl bg-card border border-border hover:border-primary/30 hover:bg-primary/5 transition-all group flex items-center gap-3"
+          >
+            <div className="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+              <Code2 className="w-4 h-4" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-[11px] text-muted-foreground font-medium">Mã nguồn dự án</p>
+              <p className="text-xs font-bold text-foreground truncate">Web-Gateway Repository</p>
+            </div>
+          </a>
+
+          <a
+            href="https://github.com/Phamminhhaik7/Web-Gateway/issues"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="p-3.5 rounded-xl bg-card border border-border hover:border-primary/30 hover:bg-primary/5 transition-all group flex items-center gap-3"
+          >
+            <div className="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+              <MessageCircle className="w-4 h-4" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-[11px] text-muted-foreground font-medium">Góp ý & Báo lỗi</p>
+              <p className="text-xs font-bold text-foreground truncate">Gửi phản hồi / Issues</p>
+            </div>
+          </a>
+        </div>
+
+        {/* Project Badge */}
+        <div className="pt-1 flex flex-wrap items-center justify-between gap-2 text-[11px] text-muted-foreground border-t border-border/60">
+          <div className="flex items-center gap-1.5">
+            <Heart className="w-3.5 h-3.5 text-primary fill-primary" />
+            <span>Phát triển vì cộng đồng sinh viên Học viện Kỹ thuật Mật mã (KMA)</span>
+          </div>
+          <span className="font-mono font-bold text-foreground/80">KMA Student OS v2.2.0</span>
+        </div>
+      </Card>
 
       {/* Sync Status Hub */}
       <Card className="border-border bg-card rounded-2xl shadow-xs p-5 sm:p-6 space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <Server className="w-5 h-5 text-brand" />
+            <Server className="w-5 h-5 text-primary" />
             <h3 className="font-extrabold text-base text-foreground">
               Trạng thái Đồng bộ Cổng Trường
             </h3>
@@ -124,7 +228,7 @@ export function SettingsPage() {
             onClick={handleSyncAll}
             disabled={isSyncing}
             size="sm"
-            className="bg-primary text-primary-foreground font-bold text-xs h-8.5 rounded-xl px-3.5 shadow-xs"
+            className="bg-primary text-primary-foreground font-bold text-xs h-8.5 rounded-xl px-3.5 shadow-xs hover:opacity-90 transition-all cursor-pointer"
           >
             {isSyncing ? (
               <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />
@@ -185,9 +289,9 @@ export function SettingsPage() {
       {/* Student Profile Card */}
       <Card className="border-border bg-card rounded-2xl shadow-xs p-5 sm:p-6 space-y-4">
         <div className="flex items-center gap-2.5">
-          <User className="w-5 h-5 text-brand" />
+          <User className="w-5 h-5 text-primary" />
           <h3 className="font-extrabold text-base text-foreground">
-            Thông tin Sinh viên
+            Thông tin Tài khoản Đăng nhập
           </h3>
         </div>
 

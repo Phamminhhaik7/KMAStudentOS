@@ -159,8 +159,8 @@ export function GpaPage() {
                 <AreaChart data={gpaTrendData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                   <defs>
                     <linearGradient id="gpaChartGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#635BFF" stopOpacity={0.3} />
-                      <stop offset="95%" stopColor="#635BFF" stopOpacity={0.0} />
+                      <stop offset="5%" stopColor="#E11D48" stopOpacity={0.35} />
+                      <stop offset="95%" stopColor="#E11D48" stopOpacity={0.0} />
                     </linearGradient>
                   </defs>
                   <XAxis dataKey="semester" stroke="#94a3b8" fontSize={10} tickLine={false} />
@@ -169,7 +169,7 @@ export function GpaPage() {
                     contentStyle={{
                       backgroundColor: '#111318',
                       borderRadius: '12px',
-                      border: 'none',
+                      border: '1px solid #242730',
                       color: '#ffffff',
                       fontSize: '12px',
                       fontWeight: 'bold',
@@ -178,7 +178,7 @@ export function GpaPage() {
                   <Area
                     type="monotone"
                     dataKey="gpaCum"
-                    stroke="#635BFF"
+                    stroke="#E11D48"
                     strokeWidth={2.5}
                     fillOpacity={1}
                     fill="url(#gpaChartGrad)"
