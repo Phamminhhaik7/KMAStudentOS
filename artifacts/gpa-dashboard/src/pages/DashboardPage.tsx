@@ -150,11 +150,17 @@ export function DashboardPage() {
           </p>
         </div>
 
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-2 shrink-0 flex-wrap">
+          <Link href="/gpa">
+            <Button size="sm" className="h-8.5 text-xs font-bold rounded-xl bg-primary text-primary-foreground shadow-xs hover:opacity-90 transition-all cursor-pointer">
+              <GraduationCap className="w-3.5 h-3.5 mr-1.5" />
+              Xem điểm & GPA
+            </Button>
+          </Link>
           <Link href="/schedule">
-            <Button size="sm" variant="outline" className="h-8.5 text-xs font-bold rounded-xl border-border">
-              <Calendar className="w-3.5 h-3.5 mr-1 text-brand" />
-              Xem thời khóa biểu
+            <Button size="sm" variant="outline" className="h-8.5 text-xs font-bold rounded-xl border-border hover:bg-muted/60 transition-all cursor-pointer">
+              <Calendar className="w-3.5 h-3.5 mr-1.5 text-primary" />
+              Thời khóa biểu
             </Button>
           </Link>
         </div>
@@ -163,71 +169,91 @@ export function DashboardPage() {
       {/* 📊 4 Core Academic OS Stat Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {/* Card 1: GPA Hệ 4 */}
-        <div className="bg-primary text-primary-foreground p-4 sm:p-5 rounded-2xl border border-primary shadow-xs flex flex-col justify-between">
-          <div className="flex items-center justify-between">
-            <p className="text-[11px] font-bold text-primary-foreground/80 uppercase tracking-wider">GPA Hệ 4</p>
-            <Badge className="bg-white text-primary text-[9px] font-black px-1.5 py-0 border-none">
-              {overallStats.classification}
-            </Badge>
+        <Link href="/gpa">
+          <div className="bg-primary text-primary-foreground p-4 sm:p-5 rounded-2xl border border-primary shadow-xs flex flex-col justify-between h-full cursor-pointer group hover:scale-[1.02] hover:shadow-md transition-all">
+            <div className="flex items-center justify-between">
+              <p className="text-[11px] font-bold text-primary-foreground/80 uppercase tracking-wider">GPA Hệ 4</p>
+              <Badge className="bg-white text-primary text-[9px] font-black px-1.5 py-0 border-none group-hover:bg-white/90">
+                {overallStats.classification}
+              </Badge>
+            </div>
+            <div className="my-2">
+              <h3 className="text-2xl sm:text-3xl font-mono font-black tracking-tight text-white">
+                {overallStats.gpa4.toFixed(2)}
+              </h3>
+              <span className="text-[11px] text-primary-foreground/70 font-mono">/ 4.00 thang điểm</span>
+            </div>
+            <p className="text-[10.5px] text-primary-foreground/80 flex items-center justify-between">
+              <span>Bảng điểm chi tiết</span>
+              <ArrowRight className="w-3 h-3 transition-transform group-hover:translate-x-0.5" />
+            </p>
           </div>
-          <div className="my-2">
-            <h3 className="text-2xl sm:text-3xl font-mono font-black tracking-tight text-white">
-              {overallStats.gpa4.toFixed(2)}
-            </h3>
-            <span className="text-[11px] text-primary-foreground/70 font-mono">/ 4.00 thang điểm</span>
-          </div>
-          <p className="text-[10.5px] text-primary-foreground/80 truncate">Điểm trung bình tích lũy</p>
-        </div>
+        </Link>
 
         {/* Card 2: GPA Hệ 10 */}
-        <div className="bg-card p-4 sm:p-5 rounded-2xl border border-border shadow-xs flex flex-col justify-between">
-          <div className="flex items-center justify-between">
-            <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">GPA Hệ 10</p>
-            <GraduationCap className="w-4 h-4 text-brand" />
+        <Link href="/gpa">
+          <div className="bg-card p-4 sm:p-5 rounded-2xl border border-border shadow-xs flex flex-col justify-between h-full cursor-pointer group hover:scale-[1.02] hover:border-primary/40 hover:shadow-md transition-all">
+            <div className="flex items-center justify-between">
+              <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">GPA Hệ 10</p>
+              <GraduationCap className="w-4 h-4 text-primary" />
+            </div>
+            <div className="my-2">
+              <h3 className="text-2xl sm:text-3xl font-mono font-black tracking-tight text-foreground">
+                {overallStats.gpa10.toFixed(2)}
+              </h3>
+              <span className="text-[11px] text-muted-foreground font-mono">/ 10.00 thang điểm</span>
+            </div>
+            <p className="text-[10.5px] text-muted-foreground flex items-center justify-between">
+              <span>Điểm tổng kết KMA</span>
+              <ArrowRight className="w-3 h-3 transition-transform group-hover:translate-x-0.5 text-primary" />
+            </p>
           </div>
-          <div className="my-2">
-            <h3 className="text-2xl sm:text-3xl font-mono font-black tracking-tight text-foreground">
-              {overallStats.gpa10.toFixed(2)}
-            </h3>
-            <span className="text-[11px] text-muted-foreground font-mono">/ 10.00 thang điểm</span>
-          </div>
-          <p className="text-[10.5px] text-muted-foreground truncate">Điểm tổng kết KMA</p>
-        </div>
+        </Link>
 
         {/* Card 3: Tín chỉ hoàn thành */}
-        <div className="bg-card p-4 sm:p-5 rounded-2xl border border-border shadow-xs flex flex-col justify-between">
-          <div className="flex items-center justify-between">
-            <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">Tín chỉ</p>
-            <BookOpen className="w-4 h-4 text-primary" />
+        <Link href="/degree">
+          <div className="bg-card p-4 sm:p-5 rounded-2xl border border-border shadow-xs flex flex-col justify-between h-full cursor-pointer group hover:scale-[1.02] hover:border-primary/40 hover:shadow-md transition-all">
+            <div className="flex items-center justify-between">
+              <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">Tín chỉ</p>
+              <BookOpen className="w-4 h-4 text-primary" />
+            </div>
+            <div className="my-2">
+              <h3 className="text-2xl sm:text-3xl font-mono font-black tracking-tight text-foreground">
+                {overallStats.credits}
+              </h3>
+              <span className="text-[11px] text-muted-foreground font-mono">/ {totalGraduationCredits} tín chỉ</span>
+            </div>
+            <p className="text-[10.5px] text-muted-foreground flex items-center justify-between">
+              <span className="truncate">Còn {Math.max(0, totalGraduationCredits - overallStats.credits)} TC để tốt nghiệp</span>
+              <ArrowRight className="w-3 h-3 transition-transform group-hover:translate-x-0.5 text-primary shrink-0 ml-1" />
+            </p>
           </div>
-          <div className="my-2">
-            <h3 className="text-2xl sm:text-3xl font-mono font-black tracking-tight text-foreground">
-              {overallStats.credits}
-            </h3>
-            <span className="text-[11px] text-muted-foreground font-mono">/ {totalGraduationCredits} tín chỉ</span>
-          </div>
-          <p className="text-[10.5px] text-muted-foreground truncate">Còn {Math.max(0, totalGraduationCredits - overallStats.credits)} TC để tốt nghiệp</p>
-        </div>
+        </Link>
 
         {/* Card 4: Tiến độ chương trình */}
-        <div className="bg-card p-4 sm:p-5 rounded-2xl border border-border shadow-xs flex flex-col justify-between">
-          <div className="flex items-center justify-between">
-            <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">Tiến độ tốt nghiệp</p>
-            <Award className="w-4 h-4 text-success" />
-          </div>
-          <div className="my-2">
-            <h3 className="text-2xl sm:text-3xl font-mono font-black tracking-tight text-foreground">
-              {progressPercent}%
-            </h3>
-            <div className="w-full bg-muted rounded-full h-1.5 mt-2 overflow-hidden">
-              <div
-                className="bg-brand h-full rounded-full transition-all duration-500"
-                style={{ width: `${progressPercent}%` }}
-              />
+        <Link href="/degree">
+          <div className="bg-card p-4 sm:p-5 rounded-2xl border border-border shadow-xs flex flex-col justify-between h-full cursor-pointer group hover:scale-[1.02] hover:border-primary/40 hover:shadow-md transition-all">
+            <div className="flex items-center justify-between">
+              <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">Tiến độ tốt nghiệp</p>
+              <Award className="w-4 h-4 text-emerald-600" />
             </div>
+            <div className="my-2">
+              <h3 className="text-2xl sm:text-3xl font-mono font-black tracking-tight text-foreground">
+                {progressPercent}%
+              </h3>
+              <div className="w-full bg-muted rounded-full h-1.5 mt-2 overflow-hidden">
+                <div
+                  className="bg-primary h-full rounded-full transition-all duration-500"
+                  style={{ width: `${progressPercent}%` }}
+                />
+              </div>
+            </div>
+            <p className="text-[10.5px] text-muted-foreground flex items-center justify-between">
+              <span>Chi tiết tiến độ KMA</span>
+              <ArrowRight className="w-3 h-3 transition-transform group-hover:translate-x-0.5 text-primary" />
+            </p>
           </div>
-          <p className="text-[10.5px] text-muted-foreground truncate">Mục tiêu GPA: {targetGpa.toFixed(2)}</p>
-        </div>
+        </Link>
       </div>
 
       {/* 2-Column Grid: Today's Timeline + Upcoming Tasks */}
