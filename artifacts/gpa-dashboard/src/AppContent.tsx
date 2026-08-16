@@ -7,18 +7,50 @@ import { GoalPlanner } from '@/components/goal-planner';
 import { SemesterCard } from '@/components/semester-card';
 import { AddSubjectDialog } from '@/components/add-subject-dialog';
 import { Button } from '@/components/ui/button';
-import { Loader2, Plus, RotateCcw, Settings, Server, RefreshCw, BookOpen, GraduationCap } from 'lucide-react';
+import { Loader2, Plus, RotateCcw, BookOpen } from 'lucide-react';
 import { Grade } from '@workspace/api-client-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useToast } from '@/hooks/use-toast';
+import { NavigationHeader } from '@/components/navigation-header';
 
 function AppContent() {
+  const { toast } = useToast();
   const { 
-    grades, subjects, gpaScale, userInfo, isLive, isLoading, hasCookie, hasEdits,
+    grades, subjects, gpaScale, userInfo, isLive, isLoading, hasCookie, hasEdits, refetch,
     saveCredentials, clearCredentials, updateGrade, deleteGrade, addPlannedSubject, resetEdits
   } = useGpaData();
 
   const [cookieDialogOpen, setCookieDialogOpen] = useState(false);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
+
+  const handleSyncGpa = async () => {
+    setIsSyncing(true);
+    try {
+      const res = await refetch();
+      if (res.data?.isLive && res.data.grades.length > 0) {
+        toast({
+          title: 'Đồng bộ điểm thi thành công! 🎉',
+          description: `Đã cập nhật bảng điểm mới nhất (${res.data.grades.length} môn học).`,
+        });
+      } else if (!hasCookie || !res.data?.isLive) {
+        toast({
+          variant: 'destructive',
+          title: 'Phiên đăng nhập Khảo thí đã hết hạn',
+          description: 'Vui lòng đăng nhập hoặc cập nhật Cookie để đồng bộ bảng điểm mới.',
+        });
+        setCookieDialogOpen(true);
+      }
+    } catch (err: any) {
+      toast({
+        variant: 'destructive',
+        title: 'Lỗi đồng bộ',
+        description: err?.message || 'Không thể kết nối đến Cổng Khảo thí.',
+      });
+    } finally {
+      setIsSyncing(false);
+    }
+  };
 
   const semesters = useMemo(() => {
     const map = new Map<string, Grade[]>();
@@ -57,37 +89,15 @@ function AppContent() {
   return (
     <div className="min-h-[100dvh] bg-background text-foreground pb-24">
       {/* Header */}
-      <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-xl border-b border-border shadow-sm">
-        <div className="max-w-5xl mx-auto px-5 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-primary text-primary-foreground flex items-center justify-center font-bold font-mono shadow-sm">
-              <GraduationCap className="w-5 h-5" />
-            </div>
-            <div>
-              <h1 className="font-bold text-foreground leading-tight hidden sm:block tracking-tight">Hệ thống Quản lý Học tập</h1>
-              <div className="flex items-center gap-2 text-xs font-mono text-muted-foreground mt-0.5">
-                {userInfo ? (
-                  <span className="font-semibold text-foreground/80">{userInfo.name} ({userInfo.id})</span>
-                ) : (
-                  <span>Khách</span>
-                )}
-                <span className="hidden sm:inline opacity-50">•</span>
-                <span className={`flex items-center gap-1.5 font-semibold ${isLive ? 'text-emerald-600' : 'text-amber-600'}`}>
-                  {isLive ? <Server className="w-3 h-3" /> : <RefreshCw className="w-3 h-3" />}
-                  {isLive ? 'Trực tuyến' : 'Ngoại tuyến'}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={() => setCookieDialogOpen(true)} className="h-9 gap-2 px-4 shadow-sm hover:bg-muted/50 border-border">
-              <Settings className="w-4 h-4 text-primary" />
-              <span className="hidden sm:inline font-semibold">Đồng bộ cổng thông tin</span>
-            </Button>
-          </div>
-        </div>
-      </header>
+      <NavigationHeader
+        studentName={userInfo?.name}
+        studentId={userInfo?.id}
+        isLive={isLive}
+        portalTitle="Đăng nhập Cổng Khảo thí"
+        onOpenPortalSettings={() => setCookieDialogOpen(true)}
+        onSyncData={handleSyncGpa}
+        isSyncing={isSyncing}
+      />
 
       <main className="max-w-5xl mx-auto px-5 py-10">
         <DashboardStats stats={overallStats} />
@@ -161,7 +171,7 @@ function AppContent() {
         onSave={saveCredentials}
         onClear={clearCredentials}
       />
-      
+
       <AddSubjectDialog
         open={addDialogOpen}
         onOpenChange={setAddDialogOpen}

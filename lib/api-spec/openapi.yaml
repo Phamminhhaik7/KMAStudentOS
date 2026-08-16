@@ -14,6 +14,8 @@ tags:
     description: Grade crawling and curriculum operations
   - name: auth
     description: Portal authentication operations
+  - name: timetable
+    description: Student schedule and timetable operations from QLĐT portal
 paths:
   /healthz:
     get:
@@ -93,6 +95,58 @@ paths:
           description: The redirect URL is missing a Microsoft `code` query parameter.
         "502":
           description: The ACTVN portal did not return a session cookie for this code.
+  /timetable:
+    get:
+      operationId: getTimetable
+      tags: [timetable]
+      summary: Fetch student timetable
+      description: >-
+        Fetches the student's registered courses and weekly class schedule from
+        the ACTVN QLĐT portal using an optionally-provided ASP.NET session cookie.
+        Falls back to bundled sample data when no cookie is provided or live fetch fails.
+      parameters:
+        - name: X-Qldt-Cookie
+          in: header
+          required: false
+          description: Session cookie string for QLĐT (ASP.NET_SessionId=...; SignIn=...).
+          schema:
+            type: string
+        - name: semester
+          in: query
+          required: false
+          description: Optional semester ID to query.
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Timetable fetched successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TimetableResponse"
+  /timetable/login:
+    post:
+      operationId: loginQldt
+      tags: [timetable]
+      summary: Login to QLĐT portal
+      description: Authenticates with the QLĐT portal using student code and password.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/QldtLoginRequest"
+      responses:
+        "200":
+          description: Logged in successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QldtLoginResponse"
+        "401":
+          description: Invalid username or password
+        "502":
+          description: Failed to reach QLĐT portal
 components:
   schemas:
     HealthStatus:
@@ -224,4 +278,162 @@ components:
             X-Portal-Cookie header on subsequent /grades requests.
       required:
         - cookie
-
+    TimetableScheduleItem:
+      type: object
+      properties:
+        raw:
+          type: string
+        phase:
+          type: number
+        startDate:
+          type: string
+        endDate:
+          type: string
+        dayOfWeek:
+          type: number
+          description: 2 for Monday, 3 for Tuesday, ..., 8 for Sunday
+        dayName:
+          type: string
+        periods:
+          type: array
+          items:
+            type: number
+        lessonType:
+          type: string
+        room:
+          type: string
+      required:
+        - raw
+        - phase
+        - startDate
+        - endDate
+        - dayOfWeek
+        - dayName
+        - periods
+        - lessonType
+        - room
+    TimetableCourse:
+      type: object
+      properties:
+        stt:
+          type: string
+        className:
+          type: string
+        subjectName:
+          type: string
+        courseCode:
+          type: string
+        credits:
+          type: number
+        timeRaw:
+          type: string
+        schedules:
+          type: array
+          items:
+            $ref: "#/components/schemas/TimetableScheduleItem"
+        room:
+          type: string
+        lecturer:
+          type: string
+        capacity:
+          type: number
+        enrolled:
+          type: number
+        tuition:
+          type: string
+        note:
+          type: string
+      required:
+        - stt
+        - className
+        - subjectName
+        - courseCode
+        - credits
+        - timeRaw
+        - schedules
+        - room
+        - lecturer
+        - capacity
+        - enrolled
+        - tuition
+        - note
+    SemesterOption:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        selected:
+          type: boolean
+      required:
+        - id
+        - name
+        - selected
+    TimetableResponse:
+      type: object
+      properties:
+        isLive:
+          type: boolean
+        studentInfo:
+          type: string
+        studentId:
+          type: string
+        studentName:
+          type: string
+        studentMajor:
+          type: string
+        semesterName:
+          type: string
+        semesterYear:
+          type: string
+        semesterTerm:
+          type: string
+        semesters:
+          type: array
+          items:
+            $ref: "#/components/schemas/SemesterOption"
+        totalCredits:
+          type: number
+        courses:
+          type: array
+          items:
+            $ref: "#/components/schemas/TimetableCourse"
+      required:
+        - isLive
+        - studentInfo
+        - studentId
+        - studentName
+        - studentMajor
+        - semesterName
+        - semesterYear
+        - semesterTerm
+        - semesters
+        - totalCredits
+        - courses
+    QldtLoginRequest:
+      type: object
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+      required:
+        - username
+        - password
+    QldtLoginResponse:
+      type: object
+      properties:
+        cookie:
+          type: string
+        studentInfo:
+          type: string
+        studentId:
+          type: string
+        studentName:
+          type: string
+      required:
+        - cookie
+        - studentInfo
+        - studentId
+        - studentName

@@ -6,6 +6,7 @@
  * OpenAPI spec version: 0.1.0
  */
 
+export * from './getTimetableParams';
 export * from './grade';
 export * from './gradesResponse';
 export * from './gradesResponseGpaScale';
@@ -13,4 +14,10 @@ export * from './healthStatus';
 export * from './microsoftExchangeRequest';
 export * from './microsoftExchangeResponse';
 export * from './portalUserInfo';
+export * from './qldtLoginRequest';
+export * from './qldtLoginResponse';
+export * from './semesterOption';
 export * from './subject';
+export * from './timetableCourse';
+export * from './timetableResponse';
+export * from './timetableScheduleItem';

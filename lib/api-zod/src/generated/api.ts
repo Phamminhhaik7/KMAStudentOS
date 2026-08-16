@@ -70,3 +70,75 @@ export const ExchangeMicrosoftCodeResponse = zod.object({
 })
 
 
+/**
+ * Fetches the student's registered courses and weekly class schedule from the ACTVN QLĐT portal using an optionally-provided ASP.NET session cookie. Falls back to bundled sample data when no cookie is provided or live fetch fails.
+ * @summary Fetch student timetable
+ */
+export const GetTimetableQueryParams = zod.object({
+  "semester": zod.coerce.string().optional().describe('Optional semester ID to query.')
+})
+
+export const GetTimetableHeader = zod.object({
+  "X-Qldt-Cookie": zod.string().optional().describe('Session cookie string for QLĐT (ASP.NET_SessionId=...; SignIn=...).')
+})
+
+export const GetTimetableResponse = zod.object({
+  "isLive": zod.boolean(),
+  "studentInfo": zod.string(),
+  "studentId": zod.string(),
+  "studentName": zod.string(),
+  "studentMajor": zod.string(),
+  "semesterName": zod.string(),
+  "semesterYear": zod.string(),
+  "semesterTerm": zod.string(),
+  "semesters": zod.array(zod.object({
+  "id": zod.string(),
+  "name": zod.string(),
+  "selected": zod.boolean()
+})),
+  "totalCredits": zod.number(),
+  "courses": zod.array(zod.object({
+  "stt": zod.string(),
+  "className": zod.string(),
+  "subjectName": zod.string(),
+  "courseCode": zod.string(),
+  "credits": zod.number(),
+  "timeRaw": zod.string(),
+  "schedules": zod.array(zod.object({
+  "raw": zod.string(),
+  "phase": zod.number(),
+  "startDate": zod.string(),
+  "endDate": zod.string(),
+  "dayOfWeek": zod.number().describe('2 for Monday, 3 for Tuesday, ..., 8 for Sunday'),
+  "dayName": zod.string(),
+  "periods": zod.array(zod.number()),
+  "lessonType": zod.string(),
+  "room": zod.string()
+})),
+  "room": zod.string(),
+  "lecturer": zod.string(),
+  "capacity": zod.number(),
+  "enrolled": zod.number(),
+  "tuition": zod.string(),
+  "note": zod.string()
+}))
+})
+
+
+/**
+ * Authenticates with the QLĐT portal using student code and password.
+ * @summary Login to QLĐT portal
+ */
+export const LoginQldtBody = zod.object({
+  "username": zod.string(),
+  "password": zod.string()
+})
+
+export const LoginQldtResponse = zod.object({
+  "cookie": zod.string(),
+  "studentInfo": zod.string(),
+  "studentId": zod.string(),
+  "studentName": zod.string()
+})
+
+

@@ -20,10 +20,14 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  GetTimetableParams,
   GradesResponse,
   HealthStatus,
   MicrosoftExchangeRequest,
-  MicrosoftExchangeResponse
+  MicrosoftExchangeResponse,
+  QldtLoginRequest,
+  QldtLoginResponse,
+  TimetableResponse
 } from './api.schemas';
 
 import { customFetch } from '../custom-fetch';
@@ -279,5 +283,162 @@ export const useExchangeMicrosoftCode = <TError = ErrorType<void>,
         TContext
       > => {
       return useMutation(getExchangeMicrosoftCodeMutationOptions(options));
+    }
+
+export const getGetTimetableUrl = (params?: GetTimetableParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/timetable?${stringifiedParams}` : `/api/timetable`
+}
+
+/**
+ * Fetches the student's registered courses and weekly class schedule from the ACTVN QLĐT portal using an optionally-provided ASP.NET session cookie. Falls back to bundled sample data when no cookie is provided or live fetch fails.
+ * @summary Fetch student timetable
+ */
+export const getTimetable = async (params?: GetTimetableParams, options?: Parameters<typeof customFetch>[1]): Promise<TimetableResponse> => {
+
+  return customFetch<TimetableResponse>(getGetTimetableUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetTimetableQueryKey = (params?: GetTimetableParams,) => {
+    return [
+    `/api/timetable`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetTimetableQueryOptions = <TData = Awaited<ReturnType<typeof getTimetable>>, TError = ErrorType<unknown>>(params?: GetTimetableParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getTimetable>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetTimetableQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getTimetable>>> = ({ signal }) => getTimetable(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getTimetable>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetTimetableQueryResult = NonNullable<Awaited<ReturnType<typeof getTimetable>>>
+export type GetTimetableQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Fetch student timetable
+ */
+
+export function useGetTimetable<TData = Awaited<ReturnType<typeof getTimetable>>, TError = ErrorType<unknown>>(
+ params?: GetTimetableParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getTimetable>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetTimetableQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getLoginQldtUrl = () => {
+
+
+
+
+  return `/api/timetable/login`
+}
+
+/**
+ * Authenticates with the QLĐT portal using student code and password.
+ * @summary Login to QLĐT portal
+ */
+export const loginQldt = async (qldtLoginRequest: QldtLoginRequest, options?: Parameters<typeof customFetch>[1]): Promise<QldtLoginResponse> => {
+
+  return customFetch<QldtLoginResponse>(getLoginQldtUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(qldtLoginRequest)
+  }
+);}
+
+
+
+
+
+export const getLoginQldtMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof loginQldt>>, TError,{data: BodyType<QldtLoginRequest>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof loginQldt>>, TError,{data: BodyType<QldtLoginRequest>}, TContext> => {
+
+const mutationKey = ['loginQldt'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof loginQldt>>, {data: BodyType<QldtLoginRequest>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  loginQldt(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type LoginQldtMutationResult = NonNullable<Awaited<ReturnType<typeof loginQldt>>>
+    export type LoginQldtMutationBody = BodyType<QldtLoginRequest>
+    export type LoginQldtMutationError = ErrorType<void>
+
+    /**
+ * @summary Login to QLĐT portal
+ */
+export const useLoginQldt = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof loginQldt>>, TError,{data: BodyType<QldtLoginRequest>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof loginQldt>>,
+        TError,
+        {data: BodyType<QldtLoginRequest>},
+        TContext
+      > => {
+      return useMutation(getLoginQldtMutationOptions(options));
     }
 

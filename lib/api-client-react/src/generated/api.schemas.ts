@@ -69,3 +69,71 @@ export interface MicrosoftExchangeResponse {
   cookie: string;
 }
 
+export interface TimetableScheduleItem {
+  raw: string;
+  phase: number;
+  startDate: string;
+  endDate: string;
+  /** 2 for Monday, 3 for Tuesday, ..., 8 for Sunday */
+  dayOfWeek: number;
+  dayName: string;
+  periods: number[];
+  lessonType: string;
+  room: string;
+}
+
+export interface TimetableCourse {
+  stt: string;
+  className: string;
+  subjectName: string;
+  courseCode: string;
+  credits: number;
+  timeRaw: string;
+  schedules: TimetableScheduleItem[];
+  room: string;
+  lecturer: string;
+  capacity: number;
+  enrolled: number;
+  tuition: string;
+  note: string;
+}
+
+export interface SemesterOption {
+  id: string;
+  name: string;
+  selected: boolean;
+}
+
+export interface TimetableResponse {
+  isLive: boolean;
+  studentInfo: string;
+  studentId: string;
+  studentName: string;
+  studentMajor: string;
+  semesterName: string;
+  semesterYear: string;
+  semesterTerm: string;
+  semesters: SemesterOption[];
+  totalCredits: number;
+  courses: TimetableCourse[];
+}
+
+export interface QldtLoginRequest {
+  username: string;
+  password: string;
+}
+
+export interface QldtLoginResponse {
+  cookie: string;
+  studentInfo: string;
+  studentId: string;
+  studentName: string;
+}
+
+export type GetTimetableParams = {
+/**
+ * Optional semester ID to query.
+ */
+semester?: string;
+};
+

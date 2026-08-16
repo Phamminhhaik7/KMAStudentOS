@@ -11,6 +11,7 @@ import {
   Router as WouterRouter,
 } from 'wouter';
 import AppContent from './AppContent';
+import SchedulePage from '@/pages/SchedulePage';
 
 const queryClient = new QueryClient();
 
@@ -19,6 +20,7 @@ function Router() {
     <RoutedErrorBoundary>
       <Switch>
         <Route path="/" component={AppContent} />
+        <Route path="/schedule" component={SchedulePage} />
         <Route component={NotFound} />
       </Switch>
     </RoutedErrorBoundary>

@@ -62,7 +62,7 @@ router.get("/grades", async (req: Request, res: ExpressResponse): Promise<void> 
 
   let isLive = false;
   let userInfo = null;
-  let grades = SAMPLE_GRADES;
+  let grades: any[] = [];
   let subjects = SAMPLE_SUBJECTS_CATALOG;
 
   if (customCookie) {
