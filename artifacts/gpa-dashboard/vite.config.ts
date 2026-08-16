@@ -23,6 +23,12 @@ export default defineConfig({
         '..',
         'attached_assets',
       ),
+      // Keep workspace packages and the app on the exact same React runtime.
+      // Without explicit aliases, pnpm's symlink layout can make Vite
+      // optimize React through two module paths and trigger invalid-hook-call
+      // errors in route components.
+      'react': path.resolve(import.meta.dirname, 'node_modules', 'react'),
+      'react-dom': path.resolve(import.meta.dirname, 'node_modules', 'react-dom'),
     },
     dedupe: ['react', 'react-dom'],
   },
@@ -35,6 +41,9 @@ export default defineConfig({
     port,
     strictPort: false,
     host: '0.0.0.0',
+    // Replit's preview proxy uses a generated *.replit.dev hostname.
+    // Allow it so Vite does not reject browser requests before the app loads.
+    allowedHosts: true,
     fs: {
       strict: false,
     },
