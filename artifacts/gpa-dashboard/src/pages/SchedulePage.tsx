@@ -121,8 +121,8 @@ export function SchedulePage() {
     }
   };
 
-  // View state: 'agenda' | 'month' | 'week' | 'day'
-  const [calendarView, setCalendarView] = useState<'agenda' | 'month' | 'week' | 'day'>('agenda');
+  // View state: 'agenda' | 'month' | 'week' | 'day' (default: 'month')
+  const [calendarView, setCalendarView] = useState<'agenda' | 'month' | 'week' | 'day'>('month');
   const [currentViewDate, setCurrentViewDate] = useState<Date>(() => new Date());
   const [loginDialogOpen, setLoginDialogOpen] = useState(false);
   const [selectedEventDetail, setSelectedEventDetail] = useState<CalendarEvent | null>(null);
