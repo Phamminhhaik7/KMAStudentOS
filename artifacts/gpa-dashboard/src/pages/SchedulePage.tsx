@@ -23,6 +23,8 @@ import {
   CheckCircle2,
   List,
   Calendar as CalendarIcon,
+  MapPin,
+  BookOpen,
 } from 'lucide-react';
 import {
   generateAllCalendarEvents,
@@ -79,8 +81,6 @@ export function SchedulePage() {
     timetable,
     isLoading,
     hasCookie,
-    selectedSemester,
-    setSelectedSemester,
     login,
     saveCookieDirectly,
     logout,
@@ -121,9 +121,15 @@ export function SchedulePage() {
     }
   };
 
-  // View state: 'agenda' | 'month' | 'week' | 'day' (default: 'month')
-  const [calendarView, setCalendarView] = useState<'agenda' | 'month' | 'week' | 'day'>('month');
+  // View state: 'month' | 'week' | 'agenda' (default: 'month')
+  const [calendarView, setCalendarView] = useState<'month' | 'week' | 'agenda'>('month');
+  
+  // Month / Week view viewing base date
   const [currentViewDate, setCurrentViewDate] = useState<Date>(() => new Date());
+
+  // Interactive selected date (for Mobile Month Matrix & Selected Day details)
+  const [selectedDate, setSelectedDate] = useState<Date>(() => new Date());
+
   const [loginDialogOpen, setLoginDialogOpen] = useState(false);
   const [selectedEventDetail, setSelectedEventDetail] = useState<CalendarEvent | null>(null);
 
@@ -132,19 +138,6 @@ export function SchedulePage() {
     if (!timetable?.courses) return [];
     return generateAllCalendarEvents(timetable.courses);
   }, [timetable?.courses]);
-
-  useEffect(() => {
-    if (allEvents.length > 0) {
-      const hasEventsInCurrentMonth = allEvents.some(
-        (e) =>
-          e.date.getFullYear() === currentViewDate.getFullYear() &&
-          e.date.getMonth() === currentViewDate.getMonth()
-      );
-      if (!hasEventsInCurrentMonth) {
-        setCurrentViewDate(new Date(allEvents[0].date));
-      }
-    }
-  }, [allEvents]);
 
   // Color mapping per course
   const courseColorMap = useMemo(() => {
@@ -170,6 +163,22 @@ export function SchedulePage() {
     return map;
   }, [allEvents]);
 
+  // Initialize view date to earliest active month if today has no events
+  useEffect(() => {
+    if (allEvents.length > 0) {
+      const hasEventsInCurrentMonth = allEvents.some(
+        (e) =>
+          e.date.getFullYear() === currentViewDate.getFullYear() &&
+          e.date.getMonth() === currentViewDate.getMonth()
+      );
+      if (!hasEventsInCurrentMonth) {
+        const firstDate = new Date(allEvents[0].date);
+        setCurrentViewDate(firstDate);
+        setSelectedDate(firstDate);
+      }
+    }
+  }, [allEvents]);
+
   // Sorted list of dates with events for Agenda view
   const datesWithEvents = useMemo(() => {
     const keys = Array.from(eventsByDate.keys()).sort();
@@ -188,6 +197,10 @@ export function SchedulePage() {
     return eventsByDate.get(todayKey) || [];
   }, [eventsByDate, todayKey]);
 
+  // Selected date key and its events
+  const selectedDateKey = useMemo(() => formatDateKey(selectedDate), [selectedDate]);
+  const selectedDateEvents = useMemo(() => eventsByDate.get(selectedDateKey) || [], [eventsByDate, selectedDateKey]);
+
   // Navigation handlers
   const handlePrev = () => {
     setCurrentViewDate((prev) => {
@@ -196,8 +209,6 @@ export function SchedulePage() {
         d.setMonth(d.getMonth() - 1);
       } else if (calendarView === 'week') {
         d.setDate(d.getDate() - 7);
-      } else {
-        d.setDate(d.getDate() - 1);
       }
       return d;
     });
@@ -210,15 +221,15 @@ export function SchedulePage() {
         d.setMonth(d.getMonth() + 1);
       } else if (calendarView === 'week') {
         d.setDate(d.getDate() + 7);
-      } else {
-        d.setDate(d.getDate() + 1);
       }
       return d;
     });
   };
 
   const handleToday = () => {
-    setCurrentViewDate(new Date());
+    const now = new Date();
+    setCurrentViewDate(now);
+    setSelectedDate(now);
   };
 
   // Calendar Header Title Text
@@ -227,7 +238,7 @@ export function SchedulePage() {
     const m = currentViewDate.getMonth() + 1;
 
     if (calendarView === 'month' || calendarView === 'agenda') {
-      return `Tháng ${m} năm ${y}`;
+      return `Tháng ${m}, ${y}`;
     }
 
     if (calendarView === 'week') {
@@ -241,9 +252,7 @@ export function SchedulePage() {
       return `Tuần ${fDay}/${fMon} – ${lDay}/${lMon}/${y}`;
     }
 
-    const dNum = String(currentViewDate.getDate()).padStart(2, '0');
-    const vnDay = DAYS_HEADER[currentViewDate.getDay()]?.fullLabel || 'Ngày';
-    return `${vnDay}, ${dNum}/${m}/${y}`;
+    return `Tháng ${m}, ${y}`;
   }, [currentViewDate, calendarView]);
 
   const monthGridDates = useMemo(() => {
@@ -261,6 +270,15 @@ export function SchedulePage() {
     const year = realtimeDate.getFullYear();
     return `${dayName}, ngày ${day}/${month}/${year}`;
   }, [realtimeDate]);
+
+  // Selected date formatted label
+  const formattedSelectedDateString = useMemo(() => {
+    const dayName = DAYS_HEADER[selectedDate.getDay()]?.fullLabel || 'Ngày';
+    const day = String(selectedDate.getDate()).padStart(2, '0');
+    const month = String(selectedDate.getMonth() + 1).padStart(2, '0');
+    const year = selectedDate.getFullYear();
+    return `${dayName}, ngày ${day}/${month}/${year}`;
+  }, [selectedDate]);
 
   // Sync to GPA Handler
   const handleSyncToGpa = () => {
@@ -316,60 +334,57 @@ export function SchedulePage() {
         isSyncing={isSyncing}
       />
 
-      <main className="max-w-6xl mx-auto px-3 sm:px-6 py-6">
-        {/* Banner: Hôm nay ngày bao nhiêu & Hôm nay học ở đâu (Loket High Contrast) */}
-        <Card className="mb-6 border-border bg-card shadow-sm overflow-hidden rounded-2xl">
-          <CardContent className="p-4 sm:p-6">
-            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
-              <div className="space-y-1.5 shrink-0">
+      <main className="max-w-6xl mx-auto px-3 sm:px-6 py-4 sm:py-6 space-y-4 sm:space-y-6">
+        {/* Banner: Hôm nay ngày bao nhiêu & Hôm nay học ở đâu (Loket Compact & High Impact) */}
+        <Card className="border-border bg-card shadow-xs overflow-hidden rounded-2xl">
+          <CardContent className="p-3.5 sm:p-5">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3.5 sm:gap-5">
+              <div className="space-y-1 shrink-0">
                 <div className="flex items-center gap-2">
-                  <Badge className="bg-primary text-primary-foreground font-bold px-2.5 py-0.5 text-[11px] uppercase tracking-wider rounded-md">
+                  <Badge className="bg-primary text-primary-foreground font-black px-2 py-0.5 text-[10px] uppercase tracking-wider rounded-md">
                     Hôm nay
                   </Badge>
-                  <span className="text-xs font-mono text-muted-foreground">Thời gian thực</span>
+                  <span className="text-xs font-mono text-muted-foreground">{formattedRealtimeString}</span>
                 </div>
-                <h2 className="text-xl sm:text-2xl font-extrabold text-foreground tracking-tight">
-                  {formattedRealtimeString}
-                </h2>
-                <p className="text-xs text-muted-foreground flex items-center gap-1.5">
-                  <Clock className="w-3.5 h-3.5 text-primary" />
-                  <span>
+                <p className="text-xs text-muted-foreground flex items-center gap-1.5 pt-0.5">
+                  <Clock className="w-3.5 h-3.5 text-primary shrink-0" />
+                  <span className="font-semibold text-foreground">
                     {todayEvents.length > 0
                       ? `Bạn có ${todayEvents.length} buổi học trên giảng đường hôm nay`
-                      : 'Hôm nay không có tiết học'}
+                      : 'Hôm nay không có tiết học trên giảng đường'}
                   </span>
                 </p>
               </div>
 
-              <div className="flex-1 lg:max-w-2xl">
+              <div className="flex-1 lg:max-w-xl">
                 {hasCourses ? (
                   todayEvents.length > 0 ? (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                       {todayEvents.map((ev) => {
                         const pal = courseColorMap.get(ev.course.courseCode || ev.course.stt) || EVENT_PALETTES[0];
                         return (
                           <div
                             key={ev.id}
                             onClick={() => setSelectedEventDetail(ev)}
-                            className={`p-3.5 rounded-xl border ${pal.border} ${pal.bg} cursor-pointer hover:shadow-md active:scale-[0.99] transition-all flex flex-col justify-between`}
+                            className={`p-2.5 sm:p-3 rounded-xl border ${pal.border} ${pal.bg} cursor-pointer hover:shadow-sm active:scale-[0.99] transition-all flex flex-col justify-between`}
                           >
-                            <div className="flex items-center justify-between gap-2 mb-2">
-                              <Badge className="bg-primary text-primary-foreground font-bold text-xs px-2.5 py-0.5 shadow-xs">
+                            <div className="flex items-center justify-between gap-2 mb-1">
+                              <Badge className="bg-primary text-primary-foreground font-bold text-[11px] px-2 py-0 shadow-2xs">
                                 🏢 {ev.room}
                               </Badge>
-                              <span className="font-mono text-xs font-bold text-foreground">
+                              <span className="font-mono text-[11px] font-bold text-foreground">
                                 {ev.startTime} ({ev.periodLabel})
                               </span>
                             </div>
-                            <p className="font-bold text-xs sm:text-sm text-foreground leading-snug line-clamp-2">
+                            <p className="font-bold text-xs text-foreground leading-snug line-clamp-1">
                               {ev.course.subjectName}
                             </p>
-                            <div className="flex items-center justify-between text-[11px] text-muted-foreground mt-2 pt-1.5 border-t border-border/40">
+                            <div className="flex items-center justify-between text-[10px] text-muted-foreground mt-1">
                               <span className="truncate flex items-center gap-1 font-medium">
                                 <User className="w-3 h-3 text-primary shrink-0" />
                                 <span className="truncate">{ev.lecturer}</span>
                               </span>
-                              <span className="font-bold text-foreground shrink-0 font-mono">
+                              <span className="font-bold text-foreground font-mono shrink-0">
                                 {ev.course.credits} TC
                               </span>
                             </div>
@@ -378,34 +393,34 @@ export function SchedulePage() {
                       })}
                     </div>
                   ) : (
-                    <div className="p-4 rounded-xl bg-muted/40 border border-border/80 flex items-center gap-3.5">
-                      <div className="w-10 h-10 rounded-xl bg-emerald-500/15 text-emerald-600 flex items-center justify-center font-bold shrink-0">
-                        <CheckCircle2 className="w-5 h-5" />
+                    <div className="p-2.5 sm:p-3 rounded-xl bg-muted/40 border border-border/80 flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-lg bg-emerald-500/15 text-emerald-600 flex items-center justify-center font-bold shrink-0">
+                        <CheckCircle2 className="w-4 h-4" />
                       </div>
-                      <div>
-                        <p className="font-bold text-xs sm:text-sm text-foreground">
-                          Hôm nay không có lịch học
+                      <div className="min-w-0">
+                        <p className="font-bold text-xs text-foreground">
+                          Nghỉ học hôm nay
                         </p>
-                        <p className="text-xs text-muted-foreground mt-0.5">
-                          Chúc bạn một ngày tự học và nghỉ ngơi thật thoải mái!
+                        <p className="text-[11px] text-muted-foreground truncate">
+                          Chúc bạn một ngày tự học và nghỉ ngơi hiệu quả!
                         </p>
                       </div>
                     </div>
                   )
                 ) : (
-                  <div className="p-4 rounded-xl bg-muted/30 border border-dashed border-border flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                    <div className="flex items-center gap-2.5">
-                      <School className="w-5 h-5 text-primary shrink-0" />
-                      <p className="text-xs text-muted-foreground">
-                        Đăng nhập QLĐT để tự động hiển thị phòng học và thời khóa biểu hôm nay.
+                  <div className="p-2.5 sm:p-3 rounded-xl bg-muted/30 border border-dashed border-border flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2">
+                      <School className="w-4 h-4 text-primary shrink-0" />
+                      <p className="text-[11px] sm:text-xs text-muted-foreground">
+                        Đăng nhập QLĐT để tải thời khóa biểu thực tế.
                       </p>
                     </div>
                     <Button
                       onClick={() => setLoginDialogOpen(true)}
                       size="sm"
-                      className="font-bold text-xs h-9 px-4 gap-1.5 shadow-xs bg-primary text-primary-foreground"
+                      className="font-bold text-xs h-7.5 px-3 gap-1 shadow-2xs bg-primary text-primary-foreground rounded-lg"
                     >
-                      <LogIn className="w-3.5 h-3.5" />
+                      <LogIn className="w-3 h-3" />
                       Đăng nhập
                     </Button>
                   </div>
@@ -415,17 +430,17 @@ export function SchedulePage() {
           </CardContent>
         </Card>
 
-        {/* Toolbar: Navigation, Title & Views (Loket Pill Switcher) */}
-        <div className="bg-card rounded-2xl border border-border shadow-sm p-4 sm:p-5 mb-6">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            {/* Prev / Next / Today */}
-            <div className="flex items-center gap-2">
-              <div className="flex items-center bg-muted/60 p-0.5 rounded-xl border border-border/80">
+        {/* Toolbar: Navigation, Title & Views (Full Width & Zero Cut-off) */}
+        <div className="bg-card rounded-2xl border border-border shadow-xs p-3.5 sm:p-4 space-y-3">
+          {/* Row 1: Nav buttons + Month Title + GPA Sync */}
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-1.5">
+              <div className="flex items-center bg-muted/70 p-0.5 rounded-xl border border-border/80">
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={handlePrev}
-                  className="h-8.5 w-8.5 p-0 rounded-lg"
+                  className="h-8 w-8 p-0 rounded-lg"
                   title="Trước"
                 >
                   <ChevronLeft className="w-4 h-4" />
@@ -434,7 +449,7 @@ export function SchedulePage() {
                   variant="ghost"
                   size="sm"
                   onClick={handleNext}
-                  className="h-8.5 w-8.5 p-0 rounded-lg"
+                  className="h-8 w-8 p-0 rounded-lg"
                   title="Sau"
                 >
                   <ChevronRight className="w-4 h-4" />
@@ -445,208 +460,257 @@ export function SchedulePage() {
                 variant="outline"
                 size="sm"
                 onClick={handleToday}
-                className="h-9 px-3 text-xs font-bold rounded-xl border-border hover:bg-muted"
+                className="h-8 px-2.5 text-xs font-bold rounded-xl border-border hover:bg-muted"
               >
                 Hôm nay
               </Button>
-
-              <h2 className="text-sm sm:text-base md:text-lg font-bold tracking-tight text-foreground ml-1 truncate">
-                {calendarTitleText}
-              </h2>
             </div>
 
-            {/* Actions & View switcher */}
-            <div className="flex items-center gap-2.5 overflow-x-auto pb-1 md:pb-0">
-              {hasCourses && (
-                <Button
-                  onClick={handleSyncToGpa}
-                  size="sm"
-                  variant="outline"
-                  className="h-9 font-bold text-xs gap-1.5 shadow-2xs rounded-xl px-3 border-border hover:bg-muted shrink-0"
-                >
-                  <Sparkles className="w-3.5 h-3.5 text-primary" />
-                  <span>Đồng bộ vào GPA</span>
-                </Button>
-              )}
+            {/* Title */}
+            <h2 className="text-sm sm:text-lg font-black tracking-tight text-foreground text-center truncate">
+              {calendarTitleText}
+            </h2>
 
-              {/* Loket Pill View Switcher */}
-              <div className="flex items-center bg-muted/80 p-1 rounded-xl border border-border/70 shrink-0">
-                <button
-                  type="button"
-                  onClick={() => setCalendarView('agenda')}
-                  className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                    calendarView === 'agenda'
-                      ? 'bg-primary text-primary-foreground shadow-xs'
-                      : 'text-muted-foreground hover:text-foreground'
-                  }`}
-                  title="Danh sách lịch biểu theo ngày"
-                >
-                  <List className="w-3.5 h-3.5" />
-                  <span className="hidden sm:inline">Lịch biểu</span>
-                  <span className="sm:hidden">Danh sách</span>
-                </button>
+            {/* Sync GPA Action */}
+            {hasCourses && (
+              <Button
+                onClick={handleSyncToGpa}
+                size="sm"
+                variant="outline"
+                className="h-8 font-bold text-xs gap-1 shadow-2xs rounded-xl px-2.5 border-border hover:bg-muted shrink-0 hidden sm:flex"
+              >
+                <Sparkles className="w-3.5 h-3.5 text-primary" />
+                <span>Đồng bộ GPA</span>
+              </Button>
+            )}
+          </div>
 
-                <button
-                  type="button"
-                  onClick={() => setCalendarView('month')}
-                  className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                    calendarView === 'month'
-                      ? 'bg-primary text-primary-foreground shadow-xs'
-                      : 'text-muted-foreground hover:text-foreground'
-                  }`}
-                >
-                  <CalendarIcon className="w-3.5 h-3.5" />
-                  <span>Tháng</span>
-                </button>
+          {/* Row 2: Responsive Segmented Control for Views */}
+          <div className="flex items-center gap-2">
+            <div className="grid grid-cols-3 w-full bg-muted/80 p-1 rounded-xl border border-border/70 text-xs font-extrabold">
+              <button
+                type="button"
+                onClick={() => setCalendarView('month')}
+                className={`flex items-center justify-center gap-1.5 py-1.5 rounded-lg transition-all cursor-pointer ${
+                  calendarView === 'month'
+                    ? 'bg-primary text-primary-foreground shadow-xs'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                <CalendarIcon className="w-3.5 h-3.5" />
+                <span>Tháng</span>
+              </button>
 
-                <button
-                  type="button"
-                  onClick={() => setCalendarView('week')}
-                  className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                    calendarView === 'week'
-                      ? 'bg-primary text-primary-foreground shadow-xs'
-                      : 'text-muted-foreground hover:text-foreground'
-                  }`}
-                >
-                  Tuần
-                </button>
+              <button
+                type="button"
+                onClick={() => setCalendarView('week')}
+                className={`flex items-center justify-center gap-1.5 py-1.5 rounded-lg transition-all cursor-pointer ${
+                  calendarView === 'week'
+                    ? 'bg-primary text-primary-foreground shadow-xs'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                <CalendarDays className="w-3.5 h-3.5" />
+                <span>Tuần</span>
+              </button>
 
-                <button
-                  type="button"
-                  onClick={() => setCalendarView('day')}
-                  className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                    calendarView === 'day'
-                      ? 'bg-primary text-primary-foreground shadow-xs'
-                      : 'text-muted-foreground hover:text-foreground'
-                  }`}
-                >
-                  Ngày
-                </button>
-              </div>
+              <button
+                type="button"
+                onClick={() => setCalendarView('agenda')}
+                className={`flex items-center justify-center gap-1.5 py-1.5 rounded-lg transition-all cursor-pointer ${
+                  calendarView === 'agenda'
+                    ? 'bg-primary text-primary-foreground shadow-xs'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                <List className="w-3.5 h-3.5" />
+                <span>Lịch biểu</span>
+              </button>
             </div>
+
+            {hasCourses && (
+              <Button
+                onClick={handleSyncToGpa}
+                size="sm"
+                variant="outline"
+                className="h-9 font-bold text-xs gap-1 shadow-2xs rounded-xl px-2.5 border-border hover:bg-muted shrink-0 sm:hidden"
+                title="Đồng bộ môn vào bảng điểm GPA"
+              >
+                <Sparkles className="w-3.5 h-3.5 text-primary" />
+              </Button>
+            )}
           </div>
         </div>
 
         {/* Loading State */}
         {isLoading && (
-          <div className="py-24 text-center flex flex-col items-center justify-center bg-card rounded-2xl border border-border">
-            <Loader2 className="w-8 h-8 animate-spin text-primary mb-3" />
+          <div className="py-20 text-center flex flex-col items-center justify-center bg-card rounded-2xl border border-border">
+            <Loader2 className="w-8 h-8 animate-spin text-primary mb-2.5" />
             <p className="text-sm font-bold text-foreground">Đang tải lịch học...</p>
-            <p className="text-xs text-muted-foreground mt-1">Đang đồng bộ dữ liệu với Cổng QLĐT</p>
+            <p className="text-xs text-muted-foreground mt-0.5">Đang đồng bộ dữ liệu với Cổng QLĐT</p>
           </div>
         )}
 
         {/* Empty State */}
         {!isLoading && !hasCourses && (
-          <div className="text-center py-20 bg-card border border-dashed border-border rounded-2xl p-6 shadow-sm">
-            <div className="w-14 h-14 bg-muted rounded-2xl flex items-center justify-center mx-auto mb-3.5 text-primary">
-              <CalendarDays className="w-7 h-7" />
+          <div className="text-center py-16 bg-card border border-dashed border-border rounded-2xl p-6 shadow-xs">
+            <div className="w-12 h-12 bg-muted rounded-2xl flex items-center justify-center mx-auto mb-3 text-primary">
+              <CalendarDays className="w-6 h-6" />
             </div>
-            <h3 className="text-base sm:text-lg font-bold text-foreground">Chưa có dữ liệu Thời khóa biểu</h3>
-            <p className="text-xs text-muted-foreground max-w-md mx-auto mt-1.5 leading-relaxed">
+            <h3 className="text-base font-bold text-foreground">Chưa có dữ liệu Thời khóa biểu</h3>
+            <p className="text-xs text-muted-foreground max-w-sm mx-auto mt-1 leading-relaxed">
               Đăng nhập tài khoản QLĐT ACTVN để tải thời khóa biểu, phòng học và giảng viên trực tiếp.
             </p>
             <Button
               onClick={() => setLoginDialogOpen(true)}
               size="sm"
-              className="mt-5 font-bold text-xs h-9 px-5 gap-1.5 shadow-sm bg-primary text-primary-foreground rounded-xl"
+              className="mt-4 font-bold text-xs h-8.5 px-4 gap-1.5 shadow-xs bg-primary text-primary-foreground rounded-xl"
             >
-              <LogIn className="w-4 h-4" />
+              <LogIn className="w-3.5 h-3.5" />
               Đăng nhập Cổng QLĐT
             </Button>
           </div>
         )}
 
-        {/* VIEW 1: AGENDA LIST VIEW (Ultimate Mobile & Desktop Usability) */}
-        {!isLoading && hasCourses && calendarView === 'agenda' && (
-          <div className="space-y-6">
-            {datesWithEvents.length > 0 ? (
-              datesWithEvents.map(({ dateString, date, events }) => {
-                const isToday = dateString === todayKey;
-                const dNum = String(date.getDate()).padStart(2, '0');
-                const mNum = String(date.getMonth() + 1).padStart(2, '0');
-                const dayHeader = DAYS_HEADER[date.getDay()]?.fullLabel || 'Ngày';
-
-                return (
-                  <div key={dateString} className="space-y-3">
-                    {/* Date Section Header */}
-                    <div className="flex items-center gap-2.5">
-                      <div
-                        className={`px-3 py-1 rounded-lg text-xs font-extrabold font-mono flex items-center gap-1.5 shadow-2xs ${
-                          isToday
-                            ? 'bg-primary text-primary-foreground'
-                            : 'bg-muted text-foreground border border-border/80'
-                        }`}
-                      >
-                        <span>{dayHeader}, {dNum}/{mNum}</span>
-                        {isToday && <span className="text-[10px] bg-white/20 px-1 rounded">HÔM NAY</span>}
-                      </div>
-                      <div className="h-[1px] flex-1 bg-border/80" />
-                      <span className="text-[11px] font-mono text-muted-foreground">{events.length} buổi học</span>
-                    </div>
-
-                    {/* Class Cards for this day */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      {events.map((ev) => {
-                        const pal = courseColorMap.get(ev.course.courseCode || ev.course.stt) || EVENT_PALETTES[0];
-                        return (
-                          <Card
-                            key={ev.id}
-                            onClick={() => setSelectedEventDetail(ev)}
-                            className={`border ${pal.border} ${pal.bg} rounded-2xl shadow-2xs cursor-pointer hover:shadow-md active:scale-[0.99] transition-all`}
-                          >
-                            <CardContent className="p-4 space-y-3">
-                              <div className="flex items-center justify-between gap-2">
-                                <div className="flex items-center gap-2">
-                                  <Badge className="bg-primary text-primary-foreground font-bold text-xs px-2.5 py-0.5 shadow-xs">
-                                    🏢 {ev.room}
-                                  </Badge>
-                                  <Badge variant="outline" className="text-[11px] font-mono font-bold bg-card">
-                                    {ev.course.courseCode}
-                                  </Badge>
-                                </div>
-                                <span className="font-mono text-xs font-bold text-foreground">
-                                  {ev.startTime} ({ev.periodLabel})
-                                </span>
-                              </div>
-
-                              <div>
-                                <h4 className="font-extrabold text-sm sm:text-base text-foreground leading-snug">
-                                  {ev.course.subjectName}
-                                </h4>
-                                <p className="text-xs text-muted-foreground font-mono mt-0.5">{ev.course.className}</p>
-                              </div>
-
-                              <div className="flex items-center justify-between text-xs text-muted-foreground pt-2.5 border-t border-border/40">
-                                <span className="flex items-center gap-1.5 font-medium text-foreground truncate max-w-[220px]">
-                                  <User className="w-3.5 h-3.5 text-primary shrink-0" />
-                                  <span className="truncate">{ev.lecturer}</span>
-                                </span>
-                                <span className="font-bold text-foreground font-mono shrink-0">
-                                  {ev.course.credits} Tín chỉ
-                                </span>
-                              </div>
-                            </CardContent>
-                          </Card>
-                        );
-                      })}
-                    </div>
-                  </div>
-                );
-              })
-            ) : (
-              <div className="text-center py-16 bg-card border rounded-2xl">
-                <p className="font-bold text-sm text-foreground">Không có buổi học nào trong đợt này</p>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* VIEW 2: MONTH CALENDAR GRID */}
+        {/* ========================================================================= */}
+        {/* VIEW 1: MONTH VIEW (Hybrid Responsive: Mobile Matrix + Desktop Table)    */}
+        {/* ========================================================================= */}
         {!isLoading && hasCourses && calendarView === 'month' && (
-          <div className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[700px] border-collapse text-left">
+          <div className="space-y-4">
+            {/* --- MOBILE COMPACT MONTH MATRIX (md:hidden) --- */}
+            <div className="md:hidden bg-card rounded-2xl border border-border shadow-xs p-3 space-y-3">
+              {/* 7-Day Header */}
+              <div className="grid grid-cols-7 gap-1 text-center font-bold text-xs text-muted-foreground pb-1 border-b border-border/60">
+                {DAYS_HEADER.map((d) => (
+                  <div key={d.dayIndex} className="py-1">
+                    <span>{d.label}</span>
+                  </div>
+                ))}
+              </div>
+
+              {/* 7-Day Grid Cells */}
+              <div className="grid grid-cols-7 gap-1">
+                {monthGridDates.map((dateObj, idx) => {
+                  const dateKey = formatDateKey(dateObj);
+                  const isCurrentMonth = dateObj.getMonth() === currentViewDate.getMonth();
+                  const isToday = dateKey === todayKey;
+                  const isSelected = dateKey === selectedDateKey;
+                  const dayEvs = eventsByDate.get(dateKey) || [];
+                  const hasEvents = dayEvs.length > 0;
+
+                  return (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => setSelectedDate(dateObj)}
+                      className={`h-11 sm:h-12 rounded-xl flex flex-col items-center justify-center relative transition-all cursor-pointer ${
+                        isSelected
+                          ? 'bg-primary text-primary-foreground font-black shadow-xs'
+                          : isToday
+                          ? 'bg-primary/10 text-primary font-extrabold ring-1 ring-primary/40'
+                          : hasEvents
+                          ? 'bg-muted/70 text-foreground font-bold hover:bg-muted'
+                          : isCurrentMonth
+                          ? 'text-foreground/90 hover:bg-muted/40'
+                          : 'text-muted-foreground/40'
+                      }`}
+                    >
+                      <span className="text-xs leading-none">{dateObj.getDate()}</span>
+
+                      {/* Class indicators */}
+                      {hasEvents && (
+                        <div className="flex items-center gap-0.5 mt-1">
+                          {dayEvs.slice(0, 3).map((ev, eIdx) => {
+                            const pal =
+                              courseColorMap.get(ev.course.courseCode || ev.course.stt) || EVENT_PALETTES[0];
+                            return (
+                              <span
+                                key={eIdx}
+                                className={`w-1.5 h-1.5 rounded-full ${
+                                  isSelected ? 'bg-white' : pal.dot
+                                }`}
+                              />
+                            );
+                          })}
+                        </div>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* --- MOBILE SELECTED DAY CLASS STREAM (md:hidden) --- */}
+            <div className="md:hidden space-y-2.5">
+              <div className="flex items-center justify-between px-1">
+                <div className="flex items-center gap-2">
+                  <div className="w-2.5 h-2.5 rounded-full bg-primary" />
+                  <h3 className="font-extrabold text-xs text-foreground tracking-tight">
+                    {formattedSelectedDateString}
+                  </h3>
+                </div>
+                <Badge variant="outline" className="text-[10px] font-mono font-bold">
+                  {selectedDateEvents.length > 0
+                    ? `${selectedDateEvents.length} buổi học`
+                    : 'Không có tiết'}
+                </Badge>
+              </div>
+
+              {selectedDateEvents.length > 0 ? (
+                <div className="space-y-2.5">
+                  {selectedDateEvents.map((ev) => {
+                    const pal =
+                      courseColorMap.get(ev.course.courseCode || ev.course.stt) || EVENT_PALETTES[0];
+                    return (
+                      <Card
+                        key={ev.id}
+                        onClick={() => setSelectedEventDetail(ev)}
+                        className={`border ${pal.border} ${pal.bg} rounded-2xl shadow-2xs cursor-pointer hover:shadow-sm active:scale-[0.99] transition-all`}
+                      >
+                        <CardContent className="p-3.5 space-y-2">
+                          <div className="flex items-center justify-between gap-2">
+                            <Badge className="bg-primary text-primary-foreground font-black text-xs px-2.5 py-0.5 shadow-2xs">
+                              🏢 {ev.room}
+                            </Badge>
+                            <span className="font-mono text-xs font-bold text-foreground">
+                              {ev.startTime} - {ev.endTime} ({ev.periodLabel})
+                            </span>
+                          </div>
+
+                          <div>
+                            <h4 className="font-extrabold text-sm text-foreground leading-snug">
+                              {ev.course.subjectName}
+                            </h4>
+                            <p className="text-[11px] text-muted-foreground font-mono mt-0.5">{ev.course.className}</p>
+                          </div>
+
+                          <div className="flex items-center justify-between text-xs text-muted-foreground pt-2 border-t border-border/40 font-medium">
+                            <span className="truncate flex items-center gap-1.5 text-foreground max-w-[200px]">
+                              <User className="w-3.5 h-3.5 text-primary shrink-0" />
+                              <span className="truncate">{ev.lecturer}</span>
+                            </span>
+                            <span className="font-bold text-foreground font-mono shrink-0">
+                              {ev.course.credits} Tín chỉ
+                            </span>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="p-4 rounded-2xl bg-card border border-dashed border-border text-center">
+                  <p className="text-xs font-bold text-foreground">Không có lịch học vào ngày này</p>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">
+                    Chọn các ngày có dấu chấm trên lịch để xem chi tiết phòng học.
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* --- DESKTOP EXPANDED MONTH TABLE (hidden md:block) --- */}
+            <div className="hidden md:block bg-card rounded-2xl border border-border shadow-xs overflow-hidden">
+              <table className="w-full border-collapse text-left">
                 <thead>
                   <tr className="bg-muted/60 border-b border-border text-xs text-muted-foreground font-bold">
                     {DAYS_HEADER.map((d) => (
@@ -660,7 +724,7 @@ export function SchedulePage() {
                   {Array.from({ length: Math.ceil(monthGridDates.length / 7) }).map((_, weekIdx) => {
                     const weekDates = monthGridDates.slice(weekIdx * 7, (weekIdx + 1) * 7);
                     return (
-                      <tr key={weekIdx} className="h-28 sm:h-32">
+                      <tr key={weekIdx} className="h-28 lg:h-32">
                         {weekDates.map((dateObj, dIdx) => {
                           const dateKey = formatDateKey(dateObj);
                           const isCurrentMonth = dateObj.getMonth() === currentViewDate.getMonth();
@@ -672,8 +736,7 @@ export function SchedulePage() {
                               key={dIdx}
                               onClick={() => {
                                 if (dayEvs.length > 0) {
-                                  setCurrentViewDate(dateObj);
-                                  setCalendarView('day');
+                                  setSelectedDate(dateObj);
                                 }
                               }}
                               className={`p-1.5 border-r last:border-r-0 border-border align-top transition-colors ${
@@ -682,7 +745,7 @@ export function SchedulePage() {
                                   : isToday
                                   ? 'bg-primary/5 border-2 border-primary/40'
                                   : 'hover:bg-muted/10'
-                              } ${dayEvs.length > 0 ? 'cursor-pointer' : ''}`}
+                              }`}
                             >
                               <div className="flex items-center justify-between mb-1">
                                 <span
@@ -697,7 +760,7 @@ export function SchedulePage() {
                                   {dateObj.getDate()}
                                 </span>
                                 {isToday && (
-                                  <span className="text-[9px] font-extrabold text-primary uppercase">Hôm nay</span>
+                                  <span className="text-[9px] font-black text-primary uppercase">Hôm nay</span>
                                 )}
                               </div>
 
@@ -737,198 +800,300 @@ export function SchedulePage() {
           </div>
         )}
 
-        {/* VIEW 3: WEEK CALENDAR GRID */}
+        {/* ========================================================================= */}
+        {/* VIEW 2: WEEK VIEW (Mobile & Desktop Clean Support)                       */}
+        {/* ========================================================================= */}
         {!isLoading && hasCourses && calendarView === 'week' && (
-          <div className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[850px] border-collapse text-left">
-                <thead>
-                  <tr className="bg-muted/60 border-b border-border text-xs text-muted-foreground font-bold">
-                    <th className="p-3 w-28 text-center border-r border-border font-mono uppercase text-[11px]">
-                      Ca / Tiết
-                    </th>
-                    {weekDaysList.map((dObj, idx) => {
-                      const dKey = formatDateKey(dObj);
-                      const isToday = dKey === todayKey;
-                      const dayName = DAYS_HEADER[dObj.getDay()]?.label || '';
-                      const dateDisplay = `${String(dObj.getDate()).padStart(2, '0')}/${String(dObj.getMonth() + 1).padStart(2, '0')}`;
+          <div className="space-y-4">
+            {/* Mobile Week Day Picker */}
+            <div className="md:hidden grid grid-cols-7 gap-1 bg-card p-2 rounded-2xl border border-border shadow-xs text-center">
+              {weekDaysList.map((dObj, idx) => {
+                const dKey = formatDateKey(dObj);
+                const isSelected = dKey === selectedDateKey;
+                const isToday = dKey === todayKey;
+                const dayEvs = eventsByDate.get(dKey) || [];
+                const dayName = DAYS_HEADER[dObj.getDay()]?.label || '';
 
-                      return (
-                        <th
-                          key={idx}
-                          className={`p-3 text-center border-r last:border-r-0 border-border ${
-                            isToday
-                              ? 'bg-primary text-primary-foreground font-black'
-                              : 'text-foreground'
-                          }`}
-                        >
-                          <div className="flex flex-col items-center gap-0.5">
-                            <span className="font-bold text-xs sm:text-sm">{dayName}</span>
-                            <span className={`text-[11px] font-mono ${isToday ? 'text-primary-foreground/90 font-bold' : 'text-muted-foreground'}`}>
-                              {dateDisplay}
-                            </span>
-                            {isToday && (
-                              <Badge className="bg-white text-primary font-black text-[9px] px-1.5 py-0 mt-0.5 border-none">
-                                HÔM NAY
-                              </Badge>
-                            )}
-                          </div>
-                        </th>
-                      );
-                    })}
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border text-xs">
-                  {PERIOD_SLOTS.map((slot) => (
-                    <tr key={slot.id} className="hover:bg-muted/10 transition-colors">
-                      <td className="p-3 border-r border-border bg-muted/20 text-center align-top">
-                        <p className="font-bold text-foreground text-xs">{slot.label}</p>
-                        <p className="font-mono text-[10px] text-muted-foreground mt-0.5">{slot.time}</p>
-                        <Badge variant="outline" className="mt-1 text-[9px] px-1.5 py-0 rounded-md">
-                          {slot.session}
-                        </Badge>
-                      </td>
+                return (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => setSelectedDate(dObj)}
+                    className={`py-2 rounded-xl flex flex-col items-center justify-center transition-all cursor-pointer ${
+                      isSelected
+                        ? 'bg-primary text-primary-foreground font-black shadow-xs'
+                        : isToday
+                        ? 'bg-primary/10 text-primary font-bold ring-1 ring-primary/40'
+                        : 'text-foreground hover:bg-muted/50'
+                    }`}
+                  >
+                    <span className="text-[10px] text-muted-foreground uppercase">{dayName}</span>
+                    <span className="text-xs font-bold font-mono mt-0.5">{dObj.getDate()}</span>
+                    {dayEvs.length > 0 && (
+                      <span className={`w-1.5 h-1.5 rounded-full mt-1 ${isSelected ? 'bg-white' : 'bg-primary'}`} />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
 
-                      {weekDaysList.map((dObj, dIdx) => {
+            {/* Mobile Selected Day Classes for Week View */}
+            <div className="md:hidden space-y-2.5">
+              <div className="flex items-center justify-between px-1">
+                <h3 className="font-extrabold text-xs text-foreground">
+                  {formattedSelectedDateString}
+                </h3>
+                <Badge variant="outline" className="text-[10px] font-mono font-bold">
+                  {selectedDateEvents.length} buổi học
+                </Badge>
+              </div>
+
+              {selectedDateEvents.length > 0 ? (
+                selectedDateEvents.map((ev) => {
+                  const pal = courseColorMap.get(ev.course.courseCode || ev.course.stt) || EVENT_PALETTES[0];
+                  return (
+                    <Card
+                      key={ev.id}
+                      onClick={() => setSelectedEventDetail(ev)}
+                      className={`border ${pal.border} ${pal.bg} rounded-2xl shadow-2xs cursor-pointer hover:shadow-sm active:scale-[0.99] transition-all`}
+                    >
+                      <CardContent className="p-3.5 space-y-2">
+                        <div className="flex items-center justify-between gap-2">
+                          <Badge className="bg-primary text-primary-foreground font-black text-xs px-2.5 py-0.5">
+                            🏢 {ev.room}
+                          </Badge>
+                          <span className="font-mono text-xs font-bold text-foreground">
+                            {ev.startTime} ({ev.periodLabel})
+                          </span>
+                        </div>
+                        <h4 className="font-extrabold text-sm text-foreground leading-snug">
+                          {ev.course.subjectName}
+                        </h4>
+                        <div className="flex items-center justify-between text-xs text-muted-foreground pt-2 border-t border-border/40 font-medium">
+                          <span className="truncate flex items-center gap-1.5 text-foreground max-w-[200px]">
+                            <User className="w-3.5 h-3.5 text-primary shrink-0" />
+                            <span className="truncate">{ev.lecturer}</span>
+                          </span>
+                          <span className="font-bold text-foreground font-mono shrink-0">
+                            {ev.course.credits} TC
+                          </span>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })
+              ) : (
+                <div className="p-4 rounded-2xl bg-card border border-dashed border-border text-center">
+                  <p className="text-xs font-bold text-foreground">Không có tiết học vào ngày này</p>
+                </div>
+              )}
+            </div>
+
+            {/* Desktop Week Grid Table */}
+            <div className="hidden md:block bg-card rounded-2xl border border-border shadow-xs overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[750px] border-collapse text-left">
+                  <thead>
+                    <tr className="bg-muted/60 border-b border-border text-xs text-muted-foreground font-bold">
+                      <th className="p-3 w-24 text-center border-r border-border font-mono uppercase text-[11px]">
+                        Ca / Tiết
+                      </th>
+                      {weekDaysList.map((dObj, idx) => {
                         const dKey = formatDateKey(dObj);
                         const isToday = dKey === todayKey;
-                        const dayEvs = eventsByDate.get(dKey) || [];
-                        const matchingEvs = dayEvs.filter((e) => e.periodSlotId === slot.id);
+                        const dayName = DAYS_HEADER[dObj.getDay()]?.label || '';
+                        const dateDisplay = `${String(dObj.getDate()).padStart(2, '0')}/${String(dObj.getMonth() + 1).padStart(2, '0')}`;
 
                         return (
-                          <td
-                            key={dIdx}
-                            className={`p-2 border-r last:border-r-0 border-border align-top min-w-[130px] h-32 ${
-                              isToday ? 'bg-primary/5 border-x-2 border-primary/30' : ''
+                          <th
+                            key={idx}
+                            className={`p-3 text-center border-r last:border-r-0 border-border ${
+                              isToday
+                                ? 'bg-primary text-primary-foreground font-black'
+                                : 'text-foreground'
                             }`}
                           >
-                            {matchingEvs.length > 0 ? (
-                              <div className="space-y-1.5">
-                                {matchingEvs.map((ev) => {
-                                  const pal =
-                                    courseColorMap.get(ev.course.courseCode || ev.course.stt) || EVENT_PALETTES[0];
-                                  return (
-                                    <div
-                                      key={ev.id}
-                                      onClick={() => setSelectedEventDetail(ev)}
-                                      className={`p-2.5 rounded-xl border cursor-pointer hover:shadow-md active:scale-[0.99] transition-all ${pal.bg} ${pal.border} ${pal.text} ${
-                                        isToday ? 'ring-1 ring-primary/40 shadow-2xs' : ''
-                                      }`}
-                                    >
-                                      <div className="flex items-center justify-between gap-1 mb-1">
-                                        <Badge className="bg-primary text-primary-foreground font-black text-[10px] px-1.5 py-0 shadow-xs">
-                                          🏢 {ev.room}
-                                        </Badge>
-                                        <span className="text-[10px] font-bold font-mono">
-                                          {ev.course.credits} TC
-                                        </span>
-                                      </div>
-                                      <p className="font-bold text-xs leading-snug line-clamp-2">
-                                        {ev.course.subjectName}
-                                      </p>
-                                      <p className="text-[11px] text-muted-foreground truncate mt-1.5 flex items-center gap-1 font-medium">
-                                        <User className="w-3 h-3 text-primary shrink-0" />
-                                        <span className="truncate">{ev.lecturer}</span>
-                                      </p>
-                                    </div>
-                                  );
-                                })}
-                              </div>
-                            ) : (
-                              <div className="h-full w-full flex items-center justify-center opacity-15">
-                                <span className="text-[11px] font-mono">—</span>
-                              </div>
-                            )}
-                          </td>
+                            <div className="flex flex-col items-center gap-0.5">
+                              <span className="font-bold text-xs sm:text-sm">{dayName}</span>
+                              <span className={`text-[11px] font-mono ${isToday ? 'text-primary-foreground/90 font-bold' : 'text-muted-foreground'}`}>
+                                {dateDisplay}
+                              </span>
+                              {isToday && (
+                                <Badge className="bg-white text-primary font-black text-[9px] px-1.5 py-0 mt-0.5 border-none">
+                                  HÔM NAY
+                                </Badge>
+                              )}
+                            </div>
+                          </th>
                         );
                       })}
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className="divide-y divide-border text-xs">
+                    {PERIOD_SLOTS.map((slot) => (
+                      <tr key={slot.id} className="hover:bg-muted/10 transition-colors">
+                        <td className="p-3 border-r border-border bg-muted/20 text-center align-top">
+                          <p className="font-bold text-foreground text-xs">{slot.label}</p>
+                          <p className="font-mono text-[10px] text-muted-foreground mt-0.5">{slot.time}</p>
+                          <Badge variant="outline" className="mt-1 text-[9px] px-1.5 py-0 rounded-md">
+                            {slot.session}
+                          </Badge>
+                        </td>
+
+                        {weekDaysList.map((dObj, dIdx) => {
+                          const dKey = formatDateKey(dObj);
+                          const isToday = dKey === todayKey;
+                          const dayEvs = eventsByDate.get(dKey) || [];
+                          const matchingEvs = dayEvs.filter((e) => e.periodSlotId === slot.id);
+
+                          return (
+                            <td
+                              key={dIdx}
+                              className={`p-2 border-r last:border-r-0 border-border align-top min-w-[120px] h-28 ${
+                                isToday ? 'bg-primary/5 border-x-2 border-primary/30' : ''
+                              }`}
+                            >
+                              {matchingEvs.length > 0 ? (
+                                <div className="space-y-1.5">
+                                  {matchingEvs.map((ev) => {
+                                    const pal =
+                                      courseColorMap.get(ev.course.courseCode || ev.course.stt) || EVENT_PALETTES[0];
+                                    return (
+                                      <div
+                                        key={ev.id}
+                                        onClick={() => setSelectedEventDetail(ev)}
+                                        className={`p-2 rounded-xl border cursor-pointer hover:shadow-sm active:scale-[0.99] transition-all ${pal.bg} ${pal.border} ${pal.text}`}
+                                      >
+                                        <div className="flex items-center justify-between gap-1 mb-1">
+                                          <Badge className="bg-primary text-primary-foreground font-black text-[10px] px-1.5 py-0 shadow-2xs">
+                                            🏢 {ev.room}
+                                          </Badge>
+                                          <span className="text-[10px] font-bold font-mono">
+                                            {ev.course.credits} TC
+                                          </span>
+                                        </div>
+                                        <p className="font-bold text-xs leading-snug line-clamp-2">
+                                          {ev.course.subjectName}
+                                        </p>
+                                        <p className="text-[10px] text-muted-foreground truncate mt-1 flex items-center gap-1 font-medium">
+                                          <User className="w-3 h-3 text-primary shrink-0" />
+                                          <span className="truncate">{ev.lecturer}</span>
+                                        </p>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              ) : (
+                                <div className="h-full w-full flex items-center justify-center opacity-15">
+                                  <span className="text-[11px] font-mono">—</span>
+                                </div>
+                              )}
+                            </td>
+                          );
+                        })}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         )}
 
-        {/* VIEW 4: SINGLE DAY VIEW */}
-        {!isLoading && hasCourses && calendarView === 'day' && (
-          <div className="max-w-2xl mx-auto space-y-4">
-            <div className="p-4 bg-card rounded-2xl border border-border shadow-sm flex items-center justify-between">
-              <div>
-                <h3 className="font-extrabold text-base text-foreground">{calendarTitleText}</h3>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  {eventsByDate.get(formatDateKey(currentViewDate))?.length || 0} buổi học được xếp lịch
-                </p>
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setCalendarView('agenda')}
-                className="text-xs font-bold h-8.5 rounded-xl"
-              >
-                Xem tất cả các ngày
-              </Button>
-            </div>
+        {/* ========================================================================= */}
+        {/* VIEW 3: AGENDA STREAM VIEW (All Dates with Classes)                       */}
+        {/* ========================================================================= */}
+        {!isLoading && hasCourses && calendarView === 'agenda' && (
+          <div className="space-y-5">
+            {datesWithEvents.length > 0 ? (
+              datesWithEvents.map(({ dateString, date, events }) => {
+                const isToday = dateString === todayKey;
+                const dNum = String(date.getDate()).padStart(2, '0');
+                const mNum = String(date.getMonth() + 1).padStart(2, '0');
+                const dayHeader = DAYS_HEADER[date.getDay()]?.fullLabel || 'Ngày';
 
-            <div className="space-y-3">
-              {(eventsByDate.get(formatDateKey(currentViewDate)) || []).map((ev) => {
-                const pal = courseColorMap.get(ev.course.courseCode || ev.course.stt) || EVENT_PALETTES[0];
                 return (
-                  <Card
-                    key={ev.id}
-                    onClick={() => setSelectedEventDetail(ev)}
-                    className={`border ${pal.border} ${pal.bg} cursor-pointer hover:shadow-md active:scale-[0.99] transition-all rounded-2xl`}
-                  >
-                    <CardContent className="p-4 sm:p-5 space-y-3">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <Badge className="bg-primary text-primary-foreground font-black text-xs px-2.5 py-0.5">
-                            🏢 {ev.room}
-                          </Badge>
-                          <Badge variant="outline" className="text-xs font-bold font-mono bg-card">
-                            {ev.course.courseCode}
-                          </Badge>
-                        </div>
-                        <span className="font-mono text-xs font-bold text-foreground">
-                          {ev.startTime} - {ev.endTime} ({ev.periodLabel})
-                        </span>
+                  <div key={dateString} className="space-y-2.5">
+                    {/* Date Section Header */}
+                    <div className="flex items-center gap-2.5">
+                      <div
+                        className={`px-3 py-1 rounded-lg text-xs font-extrabold font-mono flex items-center gap-1.5 shadow-2xs ${
+                          isToday
+                            ? 'bg-primary text-primary-foreground'
+                            : 'bg-muted text-foreground border border-border/80'
+                        }`}
+                      >
+                        <span>{dayHeader}, {dNum}/{mNum}</span>
+                        {isToday && <span className="text-[9px] bg-white/20 px-1 rounded">HÔM NAY</span>}
                       </div>
+                      <div className="h-[1px] flex-1 bg-border/80" />
+                      <span className="text-[11px] font-mono text-muted-foreground">{events.length} buổi học</span>
+                    </div>
 
-                      <div>
-                        <h4 className="font-extrabold text-base text-foreground">{ev.course.subjectName}</h4>
-                        <p className="text-xs text-muted-foreground font-mono mt-0.5">{ev.course.className}</p>
-                      </div>
+                    {/* Class Cards for this day */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+                      {events.map((ev) => {
+                        const pal = courseColorMap.get(ev.course.courseCode || ev.course.stt) || EVENT_PALETTES[0];
+                        return (
+                          <Card
+                            key={ev.id}
+                            onClick={() => setSelectedEventDetail(ev)}
+                            className={`border ${pal.border} ${pal.bg} rounded-2xl shadow-2xs cursor-pointer hover:shadow-sm active:scale-[0.99] transition-all`}
+                          >
+                            <CardContent className="p-3.5 space-y-2.5">
+                              <div className="flex items-center justify-between gap-2">
+                                <div className="flex items-center gap-2">
+                                  <Badge className="bg-primary text-primary-foreground font-black text-xs px-2.5 py-0.5 shadow-2xs">
+                                    🏢 {ev.room}
+                                  </Badge>
+                                  <Badge variant="outline" className="text-[11px] font-mono font-bold bg-card">
+                                    {ev.course.courseCode}
+                                  </Badge>
+                                </div>
+                                <span className="font-mono text-xs font-bold text-foreground">
+                                  {ev.startTime} ({ev.periodLabel})
+                                </span>
+                              </div>
 
-                      <div className="flex items-center justify-between text-xs text-muted-foreground pt-2.5 border-t border-border/40">
-                        <span className="flex items-center gap-1.5 font-medium text-foreground">
-                          <User className="w-4 h-4 text-primary" />
-                          {ev.lecturer}
-                        </span>
-                        <span className="font-bold text-foreground font-mono">{ev.course.credits} Tín chỉ</span>
-                      </div>
-                    </CardContent>
-                  </Card>
+                              <div>
+                                <h4 className="font-extrabold text-sm sm:text-base text-foreground leading-snug">
+                                  {ev.course.subjectName}
+                                </h4>
+                                <p className="text-xs text-muted-foreground font-mono mt-0.5">{ev.course.className}</p>
+                              </div>
+
+                              <div className="flex items-center justify-between text-xs text-muted-foreground pt-2 border-t border-border/40 font-medium">
+                                <span className="flex items-center gap-1.5 text-foreground truncate max-w-[200px]">
+                                  <User className="w-3.5 h-3.5 text-primary shrink-0" />
+                                  <span className="truncate">{ev.lecturer}</span>
+                                </span>
+                                <span className="font-bold text-foreground font-mono shrink-0">
+                                  {ev.course.credits} Tín chỉ
+                                </span>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        );
+                      })}
+                    </div>
+                  </div>
                 );
-              })}
-
-              {(eventsByDate.get(formatDateKey(currentViewDate)) || []).length === 0 && (
-                <div className="text-center py-16 bg-card border border-dashed rounded-2xl p-6 shadow-sm">
-                  <CheckCircle2 className="w-10 h-10 text-emerald-600 mx-auto mb-2.5" />
-                  <p className="font-bold text-sm text-foreground">Không có tiết học vào ngày này</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">Bạn có thể chọn ngày khác để xem lịch.</p>
-                </div>
-              )}
-            </div>
+              })
+            ) : (
+              <div className="text-center py-14 bg-card border rounded-2xl">
+                <p className="font-bold text-sm text-foreground">Không có buổi học nào trong đợt này</p>
+              </div>
+            )}
           </div>
         )}
       </main>
 
-      {/* EVENT DETAIL MODAL (No Cutoff / Responsive Dialog) */}
+      {/* EVENT DETAIL MODAL (Responsive Dialog) */}
       <Dialog
         open={!!selectedEventDetail}
         onOpenChange={(open) => !open && setSelectedEventDetail(null)}
       >
-        <DialogContent className="sm:max-w-[540px] max-h-[85vh] overflow-y-auto rounded-2xl">
+        <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto rounded-2xl p-4 sm:p-6">
           {selectedEventDetail && (
             <>
               <DialogHeader>
@@ -943,7 +1108,7 @@ export function SchedulePage() {
                     🏢 {selectedEventDetail.room}
                   </Badge>
                 </div>
-                <DialogTitle className="text-lg font-bold leading-snug">
+                <DialogTitle className="text-base sm:text-lg font-extrabold leading-snug">
                   {selectedEventDetail.course.subjectName}
                 </DialogTitle>
                 <DialogDescription className="font-mono text-xs text-muted-foreground">
@@ -952,50 +1117,50 @@ export function SchedulePage() {
               </DialogHeader>
 
               <div className="space-y-4 py-2 text-xs">
-                <div className="grid grid-cols-2 gap-3 bg-muted/40 p-4 rounded-xl border border-border/80">
+                <div className="grid grid-cols-2 gap-2.5 bg-muted/40 p-3.5 rounded-xl border border-border/80">
                   <div>
-                    <p className="text-muted-foreground text-[11px] font-semibold">Giảng viên</p>
-                    <p className="font-bold text-foreground text-sm mt-0.5">
+                    <p className="text-muted-foreground text-[10.5px] font-semibold">Giảng viên</p>
+                    <p className="font-bold text-foreground text-xs sm:text-sm mt-0.5 truncate">
                       {selectedEventDetail.lecturer || 'Chưa cập nhật'}
                     </p>
                   </div>
                   <div>
-                    <p className="text-muted-foreground text-[11px] font-semibold">Địa điểm phòng học</p>
-                    <p className="font-bold text-foreground text-sm mt-0.5 text-primary">
+                    <p className="text-muted-foreground text-[10.5px] font-semibold">Địa điểm phòng học</p>
+                    <p className="font-bold text-foreground text-xs sm:text-sm mt-0.5 text-primary">
                       {selectedEventDetail.room}
                     </p>
                   </div>
                   <div>
-                    <p className="text-muted-foreground text-[11px] font-semibold">Thời gian ca học</p>
-                    <p className="font-bold text-foreground text-sm mt-0.5 font-mono">
+                    <p className="text-muted-foreground text-[10.5px] font-semibold">Thời gian ca học</p>
+                    <p className="font-bold text-foreground text-xs sm:text-sm mt-0.5 font-mono">
                       {selectedEventDetail.startTime} - {selectedEventDetail.endTime}
                     </p>
                   </div>
                   <div>
-                    <p className="text-muted-foreground text-[11px] font-semibold">Đợt học</p>
-                    <p className="font-bold text-foreground text-sm mt-0.5">
+                    <p className="text-muted-foreground text-[10.5px] font-semibold">Đợt học</p>
+                    <p className="font-bold text-foreground text-xs sm:text-sm mt-0.5">
                       Đợt {selectedEventDetail.schedule.phase}
                     </p>
                   </div>
                 </div>
 
                 <div>
-                  <h4 className="font-bold text-foreground text-xs mb-2.5 flex items-center gap-1.5">
+                  <h4 className="font-bold text-foreground text-xs mb-2 flex items-center gap-1.5">
                     <Clock className="w-3.5 h-3.5 text-primary" />
-                    Tất cả các đợt học của môn này:
+                    Lịch tất cả các buổi của môn này:
                   </h4>
-                  <div className="space-y-2 max-h-[180px] overflow-y-auto pr-1">
+                  <div className="space-y-2 max-h-[160px] overflow-y-auto pr-1">
                     {selectedEventDetail.course.schedules.map((sch, i) => (
                       <div
                         key={i}
-                        className="p-3 rounded-xl border border-border/80 bg-card flex items-center justify-between gap-3 text-xs shadow-2xs"
+                        className="p-2.5 rounded-xl border border-border/80 bg-card flex items-center justify-between gap-3 text-xs shadow-2xs"
                       >
                         <div>
                           <p className="font-bold text-foreground">
                             {sch.dayName} • Tiết {sch.periods?.join(', ') || 'N/A'}{' '}
                             <span className="text-[10px] font-normal text-muted-foreground">({sch.lessonType || 'LT'})</span>
                           </p>
-                          <p className="text-[11px] text-muted-foreground mt-0.5 font-mono">
+                          <p className="text-[10.5px] text-muted-foreground mt-0.5 font-mono">
                             {sch.startDate} → {sch.endDate} (Đợt {sch.phase})
                           </p>
                         </div>
