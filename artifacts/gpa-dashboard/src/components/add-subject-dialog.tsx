@@ -85,20 +85,20 @@ export function AddSubjectDialog({ open, onOpenChange, subjects, existingSemeste
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[480px] p-0 overflow-hidden bg-background border-border/80 shadow-2xl">
-        <div className="bg-muted/30 px-6 py-6 border-b">
-          <DialogTitle className="flex items-center gap-2.5 text-xl font-bold text-foreground">
+      <DialogContent className="sm:max-w-[480px] max-h-[90vh] overflow-y-auto p-0 rounded-2xl bg-background border border-border shadow-xl">
+        <div className="bg-muted/40 px-6 py-5 border-b border-border/80">
+          <DialogTitle className="flex items-center gap-2.5 text-lg sm:text-xl font-extrabold text-foreground">
             <BookOpen className="w-5 h-5 text-primary" />
-            Lên kế hoạch môn học
+            Lên kế hoạch Môn học
           </DialogTitle>
-          <DialogDescription className="pt-2 text-foreground/70">
-            Thêm môn học từ chương trình đào tạo để xem ảnh hưởng tới GPA của bạn.
+          <DialogDescription className="pt-1.5 text-xs sm:text-sm text-muted-foreground">
+            Thêm môn học vào học kỳ dự kiến để tính toán và dự phóng GPA.
           </DialogDescription>
         </div>
 
-        <div className="p-6 space-y-5">
-          <div className="space-y-2.5">
-            <Label className="font-semibold text-foreground/90">Học kỳ</Label>
+        <div className="p-5 sm:p-6 space-y-4">
+          <div className="space-y-1.5">
+            <Label className="text-xs font-bold text-foreground">Học kỳ dự kiến</Label>
             <Select 
               value={`${year}|${term}`} 
               onValueChange={(val) => {
@@ -107,12 +107,12 @@ export function AddSubjectDialog({ open, onOpenChange, subjects, existingSemeste
                 setTerm(t);
               }}
             >
-              <SelectTrigger className="w-full shadow-sm">
+              <SelectTrigger className="w-full h-9 rounded-xl shadow-2xs font-medium text-xs">
                 <SelectValue placeholder="Chọn học kỳ" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="rounded-xl">
                 {semesterOptions.map(opt => (
-                  <SelectItem key={`${opt.year}|${opt.term}`} value={`${opt.year}|${opt.term}`}>
+                  <SelectItem key={`${opt.year}|${opt.term}`} value={`${opt.year}|${opt.term}`} className="text-xs font-medium">
                     {opt.label}
                   </SelectItem>
                 ))}
@@ -120,34 +120,34 @@ export function AddSubjectDialog({ open, onOpenChange, subjects, existingSemeste
             </Select>
           </div>
 
-          <div className="space-y-2.5">
-            <Label className="font-semibold text-foreground/90">Môn học</Label>
+          <div className="space-y-1.5">
+            <Label className="text-xs font-bold text-foreground">Môn học</Label>
             <Popover open={comboOpen} onOpenChange={setComboOpen}>
               <PopoverTrigger asChild>
                 <Button
                   variant="outline"
                   role="combobox"
                   aria-expanded={comboOpen}
-                  className="w-full justify-between font-normal text-left h-auto min-h-10 py-2 shadow-sm"
+                  className="w-full justify-between font-normal text-left h-auto min-h-9 py-2 rounded-xl shadow-2xs text-xs"
                 >
                   {selectedSubject ? (
-                    <span className="truncate">{selectedSubject.name}</span>
+                    <span className="truncate font-semibold text-foreground">{selectedSubject.name}</span>
                   ) : (
-                    <span className="text-muted-foreground">Tìm kiếm môn học...</span>
+                    <span className="text-muted-foreground">Tìm kiếm theo tên hoặc mã môn...</span>
                   )}
                   <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-[430px] p-0 shadow-lg" align="start">
+              <PopoverContent className="w-[340px] sm:w-[420px] p-0 shadow-lg rounded-xl" align="start">
                 <Command 
                   filter={(value, search) => {
                     if (removeAccents(value).includes(removeAccents(search))) return 1;
                     return 0;
                   }}
                 >
-                  <CommandInput placeholder="Tìm theo tên hoặc mã môn..." className="h-11" />
-                  <CommandList>
-                    <CommandEmpty className="py-6 text-center text-sm text-muted-foreground">Không tìm thấy môn học.</CommandEmpty>
+                  <CommandInput placeholder="Gõ tên hoặc mã môn học..." className="h-10 text-xs" />
+                  <CommandList className="max-h-60">
+                    <CommandEmpty className="py-5 text-center text-xs text-muted-foreground">Không tìm thấy môn học.</CommandEmpty>
                     <CommandGroup>
                       {subjects.map((sub) => (
                         <CommandItem
@@ -157,17 +157,17 @@ export function AddSubjectDialog({ open, onOpenChange, subjects, existingSemeste
                             setSelectedSubject(sub);
                             setComboOpen(false);
                           }}
-                          className="py-2.5 cursor-pointer"
+                          className="py-2 px-3 cursor-pointer text-xs"
                         >
                           <Check
                             className={cn(
-                              "mr-3 h-4 w-4 text-primary",
+                              "mr-2.5 h-3.5 w-3.5 text-primary",
                               selectedSubject?.code === sub.code ? "opacity-100" : "opacity-0"
                             )}
                           />
-                          <div className="flex flex-col gap-1">
-                            <span className="font-medium text-foreground">{sub.name}</span>
-                            <span className="text-[11px] text-muted-foreground font-mono bg-muted/50 px-1.5 py-0.5 rounded w-fit border border-border/50">{sub.code} • {sub.credits} tín chỉ</span>
+                          <div className="flex flex-col gap-0.5">
+                            <span className="font-semibold text-foreground text-xs">{sub.name}</span>
+                            <span className="text-[10px] text-muted-foreground font-mono bg-muted/60 px-1.5 py-0.2 rounded w-fit">{sub.code} • {sub.credits} tín chỉ</span>
                           </div>
                         </CommandItem>
                       ))}
@@ -179,9 +179,9 @@ export function AddSubjectDialog({ open, onOpenChange, subjects, existingSemeste
           </div>
 
           {selectedSubject && (
-            <div className="grid grid-cols-2 gap-4 pt-2 animate-in fade-in slide-in-from-top-2 duration-300">
-              <div className="space-y-2">
-                <Label className="text-xs font-semibold text-muted-foreground">Điểm thi dự kiến</Label>
+            <div className="grid grid-cols-2 gap-3 pt-1 animate-in fade-in duration-200">
+              <div className="space-y-1.5">
+                <Label className="text-[11px] font-bold text-muted-foreground">Điểm thi dự kiến</Label>
                 <Input 
                   type="number" 
                   step="0.1" 
@@ -190,11 +190,11 @@ export function AddSubjectDialog({ open, onOpenChange, subjects, existingSemeste
                   value={exam} 
                   onChange={e => setExam(e.target.value)}
                   placeholder="VD: 8.5"
-                  className="font-mono font-medium shadow-sm"
+                  className="font-mono font-bold text-xs h-9 rounded-lg shadow-2xs"
                 />
               </div>
-              <div className="space-y-2">
-                <Label className="text-xs font-semibold text-muted-foreground">Hoặc Tổng kết dự kiến</Label>
+              <div className="space-y-1.5">
+                <Label className="text-[11px] font-bold text-muted-foreground">Hoặc Tổng kết dự kiến</Label>
                 <Input 
                   type="number" 
                   step="0.1" 
@@ -203,17 +203,17 @@ export function AddSubjectDialog({ open, onOpenChange, subjects, existingSemeste
                   value={course} 
                   onChange={e => setCourse(e.target.value)}
                   placeholder="VD: 8.0"
-                  className="font-mono font-medium shadow-sm"
+                  className="font-mono font-bold text-xs h-9 rounded-lg shadow-2xs"
                 />
               </div>
             </div>
           )}
         </div>
 
-        <DialogFooter className="bg-muted/30 px-6 py-4 border-t">
-          <Button variant="ghost" onClick={() => onOpenChange(false)} className="hover:bg-muted/50">Hủy</Button>
-          <Button disabled={!selectedSubject || !year || !term} onClick={handleSave} className="min-w-[140px] shadow-sm">
-            <Plus className="w-4 h-4 mr-2" />
+        <DialogFooter className="bg-muted/40 px-5 sm:px-6 py-3.5 border-t border-border/80 flex items-center justify-between">
+          <Button variant="ghost" size="sm" onClick={() => onOpenChange(false)} className="text-xs h-8 rounded-xl font-medium">Hủy</Button>
+          <Button disabled={!selectedSubject || !year || !term} onClick={handleSave} size="sm" className="font-bold text-xs h-8.5 rounded-xl px-4 shadow-xs">
+            <Plus className="w-3.5 h-3.5 mr-1.5" />
             Thêm vào kế hoạch
           </Button>
         </DialogFooter>

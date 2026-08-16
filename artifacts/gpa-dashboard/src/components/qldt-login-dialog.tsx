@@ -106,16 +106,16 @@ export function QldtLoginDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[480px]">
+      <DialogContent className="sm:max-w-[480px] max-h-[90vh] overflow-y-auto rounded-2xl p-5 sm:p-6 border border-border shadow-xl">
         <DialogHeader>
-          <div className="flex items-center gap-2.5 mb-1">
-            <div className="w-9 h-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center font-bold">
+          <div className="flex items-center gap-3 mb-1">
+            <div className="w-10 h-10 rounded-xl bg-primary text-primary-foreground flex items-center justify-center font-bold shadow-2xs shrink-0">
               <School className="w-5 h-5" />
             </div>
             <div>
-              <DialogTitle className="text-lg font-bold">Cổng Đào Tạo QLĐT ACTVN</DialogTitle>
+              <DialogTitle className="text-lg font-extrabold text-foreground">Cổng Đào Tạo QLĐT ACTVN</DialogTitle>
               <DialogDescription className="text-xs text-muted-foreground">
-                qldt.actvn.edu.vn • Đồng bộ thời khóa biểu sinh viên
+                qldt.actvn.edu.vn • Tự động tải thời khóa biểu & phòng học
               </DialogDescription>
             </div>
           </div>
@@ -126,10 +126,10 @@ export function QldtLoginDialog({
             <div className="flex items-center gap-2.5">
               <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
               <div>
-                <p className="text-xs font-semibold text-emerald-800 dark:text-emerald-300">
+                <p className="text-xs font-bold text-emerald-800 dark:text-emerald-300">
                   Đã kết nối trực tuyến
                 </p>
-                <p className="text-xs font-mono text-emerald-700/80 dark:text-emerald-400">
+                <p className="text-xs font-mono text-emerald-700/80 dark:text-emerald-400 font-semibold">
                   {studentInfo || 'Sinh viên ACTVN'}
                 </p>
               </div>
@@ -139,7 +139,7 @@ export function QldtLoginDialog({
               variant="outline"
               size="sm"
               onClick={handleLogoutClick}
-              className="text-xs h-8 text-destructive border-destructive/30 hover:bg-destructive/10"
+              className="text-xs h-8 text-destructive border-destructive/30 hover:bg-destructive/10 rounded-xl font-bold"
             >
               <LogOut className="w-3.5 h-3.5 mr-1" />
               Đăng xuất

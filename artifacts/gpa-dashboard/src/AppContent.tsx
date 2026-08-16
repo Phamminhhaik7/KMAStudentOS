@@ -93,16 +93,16 @@ function AppContent() {
         studentName={userInfo?.name}
         studentId={userInfo?.id}
         isLive={isLive}
-        portalTitle="Đăng nhập Cổng Khảo thí"
+        portalTitle="Đăng nhập Khảo thí"
         onOpenPortalSettings={() => setCookieDialogOpen(true)}
         onSyncData={handleSyncGpa}
         isSyncing={isSyncing}
       />
 
-      <main className="max-w-5xl mx-auto px-5 py-10">
+      <main className="max-w-5xl mx-auto px-3.5 sm:px-6 py-6 sm:py-8">
         <DashboardStats stats={overallStats} />
         
-        <div className="mb-12">
+        <div className="mb-8 sm:mb-10">
           <GoalPlanner 
             grades={grades} 
             currentGpa4={overallStats.gpa4} 
@@ -110,30 +110,30 @@ function AppContent() {
           />
         </div>
 
-        <div className="flex flex-col md:flex-row md:items-end justify-between mb-6 gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-5 gap-3">
           <div>
-            <h2 className="text-2xl font-bold text-foreground tracking-tight mb-2">Chi tiết học kỳ</h2>
-            <p className="text-sm text-muted-foreground/80 font-medium">Nhấn vào điểm trong bảng để chỉnh sửa. Hệ thống tự động tính toán lại.</p>
+            <h2 className="text-xl sm:text-2xl font-extrabold text-foreground tracking-tight">Chi tiết học kỳ & Bảng điểm</h2>
+            <p className="text-xs text-muted-foreground mt-0.5">Nhấp vào điểm trong bảng để chỉnh sửa hoặc dự phóng điểm số.</p>
           </div>
-          <div className="flex gap-3 items-center w-full md:w-auto">
+          <div className="flex gap-2.5 items-center w-full sm:w-auto">
             <AnimatePresence>
               {hasEdits && (
                 <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}>
-                  <Button variant="ghost" size="sm" onClick={resetEdits} className="text-destructive hover:text-destructive hover:bg-destructive/10 h-9 px-3 font-semibold">
-                    <RotateCcw className="w-4 h-4 mr-2" />
-                    Đặt lại chỉnh sửa
+                  <Button variant="ghost" size="sm" onClick={resetEdits} className="text-destructive hover:text-destructive hover:bg-destructive/10 h-8.5 px-3 font-bold text-xs rounded-xl">
+                    <RotateCcw className="w-3.5 h-3.5 mr-1.5" />
+                    Đặt lại
                   </Button>
                 </motion.div>
               )}
             </AnimatePresence>
-            <Button size="sm" onClick={() => setAddDialogOpen(true)} className="bg-foreground text-background hover:bg-foreground/90 h-9 shadow-md flex-1 md:flex-none font-semibold">
-              <Plus className="w-4 h-4 mr-2" />
+            <Button size="sm" onClick={() => setAddDialogOpen(true)} className="bg-primary text-primary-foreground hover:opacity-90 h-8.5 shadow-xs flex-1 sm:flex-none font-bold text-xs rounded-xl px-4">
+              <Plus className="w-3.5 h-3.5 mr-1.5" />
               Thêm môn dự kiến
             </Button>
           </div>
         </div>
 
-        <div className="space-y-6">
+        <div className="space-y-4">
           {semesters.map((sem, idx) => (
             <SemesterCard 
               key={sem.id}
@@ -147,16 +147,16 @@ function AppContent() {
           ))}
           
           {semesters.length === 0 && (
-            <div className="text-center py-24 bg-muted/20 border border-dashed rounded-2xl">
-              <div className="w-16 h-16 bg-muted border border-border/50 rounded-2xl flex items-center justify-center mx-auto mb-5 text-muted-foreground/50">
-                <BookOpen className="w-8 h-8" />
+            <div className="text-center py-20 bg-card border border-dashed border-border rounded-2xl p-6 shadow-xs">
+              <div className="w-14 h-14 bg-muted rounded-2xl flex items-center justify-center mx-auto mb-3.5 text-primary">
+                <BookOpen className="w-7 h-7" />
               </div>
-              <h3 className="text-xl font-bold mb-2 text-foreground/80">Chưa có điểm</h3>
-              <p className="text-muted-foreground text-sm max-w-md mx-auto leading-relaxed">
-                Đăng nhập để đồng bộ dữ liệu thực tế từ hệ thống, hoặc thêm môn học dự kiến để bắt đầu tính toán điểm số.
+              <h3 className="text-base sm:text-lg font-bold text-foreground">Chưa có bảng điểm</h3>
+              <p className="text-xs text-muted-foreground max-w-md mx-auto mt-1.5 leading-relaxed">
+                Đăng nhập Cổng Khảo thí để tự động đồng bộ bảng điểm cá nhân, hoặc thêm môn học dự kiến để tính điểm.
               </p>
-              <Button onClick={() => setCookieDialogOpen(true)} variant="outline" className="mt-6 shadow-sm font-semibold">
-                Đồng bộ ngay
+              <Button onClick={() => setCookieDialogOpen(true)} size="sm" className="mt-5 font-bold text-xs h-9 px-5 gap-1.5 shadow-xs bg-primary text-primary-foreground rounded-xl">
+                Đồng bộ Bảng Điểm
               </Button>
             </div>
           )}

@@ -46,38 +46,38 @@
 }
 
 :root {
-  /* Elegant Sage & Forest Green Theme */
-  --background: 60 15% 98%;
-  --foreground: 160 35% 15%;
+  /* Loket Design Tokens - Crisp Obsidian, Soft Slate & High Contrast */
+  --background: 215 25% 97%;          /* #f1f5f9 */
+  --foreground: 240 10% 9%;           /* #151416 */
 
-  --card: 0 0% 100%;
-  --card-foreground: 160 35% 15%;
-  --card-border: 155 15% 90%;
+  --card: 0 0% 100%;                  /* #ffffff */
+  --card-foreground: 240 10% 9%;      /* #151416 */
+  --card-border: 214 20% 90%;         /* #e2e8f0 */
 
   --popover: 0 0% 100%;
-  --popover-foreground: 160 35% 15%;
-  --popover-border: 155 15% 90%;
+  --popover-foreground: 240 10% 9%;
+  --popover-border: 214 20% 90%;
 
-  --primary: 160 45% 26%;
-  --primary-foreground: 60 15% 98%;
+  --primary: 240 10% 9%;              /* #151416 - Loket Obsidian Primary */
+  --primary-foreground: 0 0% 100%;    /* #ffffff */
 
-  --secondary: 155 20% 90%;
-  --secondary-foreground: 160 40% 20%;
+  --secondary: 210 20% 94%;           /* #eef2f6 */
+  --secondary-foreground: 240 10% 15%;
 
-  --muted: 155 15% 93%;
-  --muted-foreground: 160 15% 45%;
+  --muted: 210 20% 94%;
+  --muted-foreground: 215 16% 45%;    /* #64748b */
 
-  --accent: 155 25% 85%;
-  --accent-foreground: 160 40% 20%;
+  --accent: 210 30% 92%;
+  --accent-foreground: 240 10% 9%;
 
-  --destructive: 0 60% 50%;
+  --destructive: 0 72% 51%;
   --destructive-foreground: 0 0% 100%;
 
-  --border: 155 15% 88%;
-  --input: 155 15% 86%;
-  --ring: 160 45% 26%;
+  --border: 214 20% 89%;              /* #e2e8f0 */
+  --input: 214 20% 88%;
+  --ring: 240 10% 9%;
 
-  --radius: 0.75rem; 
+  --radius: 0.75rem;                  /* 12px lg radius from Loket */
 }
 
 @layer base {
@@ -86,6 +86,7 @@
   }
 
   body {
-    @apply font-sans antialiased bg-background text-foreground selection:bg-primary/20 selection:text-primary;
+    @apply font-sans antialiased bg-background text-foreground selection:bg-primary/15 selection:text-primary min-h-[100dvh];
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   }
 }
