@@ -2,20 +2,113 @@
 <html lang="vi">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
-    <title>KMA Student — Personal Academic Dashboard</title>
-    <meta name="description" content="KMA Student Academic Dashboard — Quản lý GPA, Thời khóa biểu, Điểm thi và Tiến độ học tập KMA." />
-    <meta name="robots" content="index, follow" />
-    <meta property="og:title" content="KMA Student — Personal Academic Dashboard" />
-    <meta property="og:description" content="Quản lý GPA, Thời khóa biểu, Điểm thi và Tiến độ học tập Học viện Kỹ thuật Mật mã." />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
+    <title>KMA Student OS — Quản lý GPA, Thời khóa biểu & Bảng điểm KMA</title>
+    
+    <!-- Canonical & Base URLs -->
+    <link rel="canonical" href="https://kmastudent.io.vn/" />
+    <base href="/" />
+
+    <!-- Search Engine Indexing & Robots -->
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+    <meta name="googlebot" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
+    <meta name="bingbot" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
+
+    <!-- Meta Description & SEO Keywords -->
+    <meta name="description" content="Hệ điều hành học tập thông minh dành cho sinh viên Học viện Kỹ thuật Mật mã (KMA). Tính điểm GPA hệ 4 & hệ 10, đồng bộ thời khóa biểu tự động từ Cổng QLĐT, tra cứu lịch thi và theo dõi tiến độ tốt nghiệp chi tiết." />
+    <meta name="keywords" content="kma student, kmastudent, kmastudent.io.vn, kma student os, tính gpa kma, bảng điểm kma, thời khóa biểu kma, điểm thi kma, học viện kỹ thuật mật mã, qldt actvn, khaothi actvn, tra cứu điểm kma, gpa calculator kma, tiến độ tốt nghiệp kma, lịch học actvn" />
+    <meta name="author" content="Gehihi - Phạm Minh Hải" />
+    <meta name="theme-color" content="#E11D48" />
+    <meta name="application-name" content="KMA Student OS" />
+    <meta name="apple-mobile-web-app-title" content="KMA Student" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+    <!-- Open Graph (Facebook / Zalo / LinkedIn) -->
     <meta property="og:type" content="website" />
-    <meta property="og:image" content="/kma-logo.png" />
-    <link rel="icon" type="image/png" href="/kma-logo.png" />
-    <link rel="apple-touch-icon" href="/kma-logo.png" />
+    <meta property="og:site_name" content="KMA Student OS" />
+    <meta property="og:url" content="https://kmastudent.io.vn/" />
+    <meta property="og:title" content="KMA Student OS — Quản lý GPA, Thời khóa biểu & Bảng điểm KMA" />
+    <meta property="og:description" content="Personal Academic Dashboard dành cho sinh viên Học viện Kỹ thuật Mật mã. Đồng bộ thời khóa biểu, tính GPA hệ 4 & 10, theo dõi lịch thi và tiến độ tốt nghiệp." />
+    <meta property="og:image" content="https://kmastudent.io.vn/kma-logo.png" />
+    <meta property="og:image:secure_url" content="https://kmastudent.io.vn/kma-logo.png" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="512" />
+    <meta property="og:image:height" content="512" />
+    <meta property="og:image:alt" content="KMA Student OS Logo" />
+    <meta property="og:locale" content="vi_VN" />
+
+    <!-- Twitter Cards -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:url" content="https://kmastudent.io.vn/" />
+    <meta name="twitter:title" content="KMA Student OS — Quản lý GPA, Thời khóa biểu & Bảng điểm KMA" />
+    <meta name="twitter:description" content="Personal Academic Dashboard dành cho sinh viên Học viện Kỹ thuật Mật mã. Đồng bộ thời khóa biểu, tính GPA hệ 4 & 10, theo dõi lịch thi và tiến độ tốt nghiệp." />
+    <meta name="twitter:image" content="https://kmastudent.io.vn/kma-logo.png" />
+
+    <!-- Favicons & App Manifest -->
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon.png" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/kma-logo.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/kma-logo.png" />
     <link rel="shortcut icon" href="/kma-logo.png" />
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="manifest" href="/site.webmanifest" />
+
+    <!-- Typography & Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+
+    <!-- Schema.org Structured Data (JSON-LD) for Google Rich Snippets -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "WebApplication",
+          "@id": "https://kmastudent.io.vn/#webapp",
+          "name": "KMA Student OS",
+          "url": "https://kmastudent.io.vn/",
+          "description": "Personal Academic Dashboard dành cho sinh viên Học viện Kỹ thuật Mật mã (KMA). Quản lý GPA, Thời khóa biểu, Điểm thi và Tiến độ tốt nghiệp.",
+          "applicationCategory": "EducationalApplication",
+          "operatingSystem": "Web, iOS, Android, Windows, macOS",
+          "inLanguage": "vi",
+          "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "VND"
+          },
+          "author": {
+            "@type": "Person",
+            "name": "Gehihi",
+            "email": "CT100127@actvn.edu.vn",
+            "url": "https://github.com/Phamminhhaik7/KMAStudentOS"
+          }
+        },
+        {
+          "@type": "WebSite",
+          "@id": "https://kmastudent.io.vn/#website",
+          "url": "https://kmastudent.io.vn/",
+          "name": "KMA Student OS",
+          "description": "Cổng thông tin & công cụ học tập cho sinh viên Học viện Kỹ thuật Mật mã",
+          "publisher": {
+            "@type": "Organization",
+            "name": "KMA Student OS",
+            "logo": {
+              "@type": "ImageObject",
+              "url": "https://kmastudent.io.vn/kma-logo.png"
+            }
+          }
+        },
+        {
+          "@type": "EducationalOrganization",
+          "@id": "https://kmastudent.io.vn/#organization",
+          "name": "Học viện Kỹ thuật Mật mã",
+          "alternateName": "KMA - Academy of Cryptography Techniques",
+          "url": "https://actvn.edu.vn",
+          "logo": "https://kmastudent.io.vn/kma-logo.png"
+        }
+      ]
+    }
+    </script>
   </head>
   <body>
     <div id="root"></div>

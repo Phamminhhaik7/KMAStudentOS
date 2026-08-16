@@ -1,0 +1,21 @@
+{
+  "name": "KMA Student OS — Personal Academic Dashboard",
+  "short_name": "KMA Student",
+  "description": "Quản lý GPA, Thời khóa biểu, Điểm thi và Tiến độ tốt nghiệp sinh viên Học viện Kỹ thuật Mật mã (KMA)",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0B0C0E",
+  "theme_color": "#E11D48",
+  "icons": [
+    {
+      "src": "/kma-logo.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/kma-logo.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
