@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { Target, Trophy, ArrowRight, XCircle, Sparkles } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Grade } from '@workspace/api-client-react';
-import { isPhysicalEducation } from '@/lib/utils';
+import { isPhysicalEducation, isRetakePrevious } from '@/lib/utils';
 import { motion } from 'framer-motion';
 import { Badge } from '@/components/ui/badge';
 
@@ -12,6 +12,7 @@ export function GoalPlanner({ grades, currentGpa4, totalCredits }: { grades: Gra
   const { remainingCredits, result } = useMemo(() => {
     const pending = grades.filter(g => 
       !isPhysicalEducation(g.subject) && 
+      !isRetakePrevious(g, grades) &&
       (!g.course || g.course === '-' || g.stt.startsWith('planned_'))
     );
     

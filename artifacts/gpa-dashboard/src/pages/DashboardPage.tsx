@@ -42,7 +42,7 @@ export function DashboardPage() {
   const { exams } = useExams();
   const { progressStats } = useCurriculum();
 
-  const studentName = userInfo?.name || timetable?.studentName || 'Phạm Minh Hải';
+  const studentName = userInfo?.name || timetable?.studentName || 'CHƯA ĐĂNG NHẬP';
   const todayKey = useMemo(() => formatDateKey(new Date()), []);
 
   // GPA Stats
@@ -128,7 +128,7 @@ export function DashboardPage() {
         <div className="space-y-1">
           <div className="flex items-center gap-2">
             <h1 className="text-xl sm:text-2xl font-black text-foreground tracking-tight">
-              Chào {studentName} 👋
+              {studentName === 'CHƯA ĐĂNG NHẬP' ? 'Xin chào CHƯA ĐĂNG NHẬP 👋' : `Chào ${studentName} 👋`}
             </h1>
           </div>
           <p className="text-xs sm:text-sm text-muted-foreground font-medium flex items-center gap-2 flex-wrap">

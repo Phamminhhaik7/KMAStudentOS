@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useGpaData } from './use-gpa-data';
 import { useTimetable } from './use-timetable';
+import { isPhysicalEducation, isRetakePrevious } from '@/lib/utils';
 
 export interface CurriculumCourse {
   stt: string;
@@ -127,9 +128,20 @@ export function useCurriculum() {
   const completedCourseCodes = useMemo(() => {
     const set = new Set<string>();
     grades.forEach((g) => {
-      // If course is completed (has grade and not failed F)
-      if (g.course && g.course !== '-' && g.letter !== 'F') {
-        set.add(g.code.trim().toUpperCase());
+      // If course is completed (has grade and not failed F), and not PE/retake previous
+      if (
+        g.course &&
+        g.course !== '-' &&
+        g.letter !== 'F' &&
+        !isPhysicalEducation(g.subject) &&
+        !isRetakePrevious(g, grades)
+      ) {
+        if (g.code && g.code.trim()) {
+          set.add(g.code.trim().toUpperCase());
+        }
+        if (g.subject && g.subject.trim()) {
+          set.add(g.subject.trim().toUpperCase());
+        }
       }
     });
     return set;
@@ -139,30 +151,45 @@ export function useCurriculum() {
   const progressStats = useMemo(() => {
     const totalRequired = curriculum?.totalCredits || 145;
 
-    // Sum actual credits from grades
-    let totalCompleted = 0;
-    grades.forEach((g) => {
-      if (g.course && g.course !== '-' && g.letter !== 'F') {
-        totalCompleted += g.credits;
-      }
-    });
-
     const groupsSummary = (curriculum?.groups || []).map((group) => {
-      let groupCompleted = 0;
+      let rawCompleted = 0;
       group.courses.forEach((c) => {
-        if (completedCourseCodes.has(c.courseCode.trim().toUpperCase())) {
-          groupCompleted += c.credits;
+        const codeMatch = c.courseCode && completedCourseCodes.has(c.courseCode.trim().toUpperCase());
+        const nameMatch = c.subjectName && completedCourseCodes.has(c.subjectName.trim().toUpperCase());
+        if (codeMatch || nameMatch) {
+          rawCompleted += c.credits;
         }
       });
 
+      const effectiveCompleted = group.totalCredits > 0 ? Math.min(group.totalCredits, rawCompleted) : rawCompleted;
+      const percent = group.totalCredits > 0 ? Math.min(100, Math.round((effectiveCompleted / group.totalCredits) * 100)) : 0;
+
       return {
         ...group,
-        completedCredits: groupCompleted,
-        percent: group.totalCredits > 0 ? Math.min(100, Math.round((groupCompleted / group.totalCredits) * 100)) : 0,
+        completedCredits: effectiveCompleted,
+        rawCompleted,
+        percent,
       };
     });
 
-    const percent = Math.min(100, Math.round((totalCompleted / totalRequired) * 100));
+    let totalCompleted = 0;
+    if (curriculum?.groups && curriculum.groups.length > 0) {
+      totalCompleted = groupsSummary.reduce((sum, g) => sum + g.completedCredits, 0);
+    } else {
+      grades.forEach((g) => {
+        if (
+          g.course &&
+          g.course !== '-' &&
+          g.letter !== 'F' &&
+          !isPhysicalEducation(g.subject) &&
+          !isRetakePrevious(g, grades)
+        ) {
+          totalCompleted += g.credits;
+        }
+      });
+    }
+
+    const percent = totalRequired > 0 ? Math.min(100, Math.round((totalCompleted / totalRequired) * 100)) : 0;
 
     return {
       totalRequired,

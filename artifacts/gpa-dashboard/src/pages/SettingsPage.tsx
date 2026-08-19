@@ -53,7 +53,7 @@ export function SettingsPage() {
   const [qldtDialogOpen, setQldtDialogOpen] = useState(false);
   const [gpaDialogOpen, setGpaDialogOpen] = useState(false);
 
-  const studentName = userInfo?.name || timetable?.studentName || 'Phạm Minh Hải';
+  const studentName = userInfo?.name || timetable?.studentName || 'CHƯA ĐĂNG NHẬP';
   const studentId = userInfo?.id || timetable?.studentId || 'Chưa cập nhật';
 
   const handleSyncAll = async () => {

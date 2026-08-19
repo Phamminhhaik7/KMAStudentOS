@@ -49,7 +49,7 @@ export function NavigationHeader({
                   {studentName}
                 </span>
               ) : (
-                <span className="truncate text-muted-foreground">Offline</span>
+                <span className="truncate text-muted-foreground">Chưa đăng nhập</span>
               )}
               {isLive !== undefined && (
                 <span

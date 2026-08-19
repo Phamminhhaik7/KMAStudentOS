@@ -1,6 +1,6 @@
 import { memo, useMemo, useState } from "react";
 import { Grade, GradesResponseGpaScale } from "@workspace/api-client-react";
-import { calculateGpa, isPhysicalEducation } from "@/lib/utils";
+import { calculateGpa, isPhysicalEducation, isRetakePrevious } from "@/lib/utils";
 import { Table, TableBody, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { GradeRow } from "./grade-row";
 import { motion } from "framer-motion";
@@ -12,16 +12,18 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 interface SemesterCardProps {
   semesterId: string;
   grades: Grade[];
+  allGrades?: Grade[];
   gpaScale: GradesResponseGpaScale;
   onUpdate: (stt: string, field: keyof Grade, value: string) => void;
   onDelete: (stt: string) => void;
   index: number;
 }
 
-export const SemesterCard = memo(({ semesterId, grades, gpaScale, onUpdate, onDelete, index }: SemesterCardProps) => {
+export const SemesterCard = memo(({ semesterId, grades, allGrades = [], gpaScale, onUpdate, onDelete, index }: SemesterCardProps) => {
   const [isOpen, setIsOpen] = useState(index === 0);
   const { year, term } = grades[0] || { year: "", term: "" };
   
+  const effectiveAllGrades = allGrades.length > 0 ? allGrades : grades;
   const stats = useMemo(() => calculateGpa(grades, gpaScale), [grades, gpaScale]);
   const plannedCount = grades.filter(g => g.stt.startsWith('planned_') || g.course === '-').length;
 
@@ -91,6 +93,7 @@ export const SemesterCard = memo(({ semesterId, grades, gpaScale, onUpdate, onDe
                   <GradeRow 
                     key={grade.stt}
                     grade={grade}
+                    allGrades={effectiveAllGrades}
                     gpaScale={gpaScale}
                     onUpdate={onUpdate}
                     onDelete={onDelete}
@@ -104,11 +107,13 @@ export const SemesterCard = memo(({ semesterId, grades, gpaScale, onUpdate, onDe
           <div className="sm:hidden p-3 space-y-3 bg-muted/20">
             {grades.map(grade => {
               const isPE = isPhysicalEducation(grade.subject);
+              const isRetakePrev = isRetakePrevious(grade, effectiveAllGrades);
+              const isExcluded = isPE || isRetakePrev;
               return (
                 <div 
                   key={grade.stt} 
                   className={`p-3.5 bg-card border border-border/80 rounded-xl space-y-2.5 shadow-2xs ${
-                    isPE ? 'opacity-70' : ''
+                    isExcluded ? 'opacity-70 grayscale-[0.3]' : ''
                   }`}
                 >
                   <div className="flex items-start justify-between gap-2">
@@ -118,6 +123,11 @@ export const SemesterCard = memo(({ semesterId, grades, gpaScale, onUpdate, onDe
                       {isPE && (
                         <div className="text-[9.5px] text-muted-foreground font-semibold flex items-center gap-1 mt-0.5">
                           <AlertCircle className="w-3 h-3"/> Không tính GPA
+                        </div>
+                      )}
+                      {!isPE && isRetakePrev && (
+                        <div className="text-[9.5px] text-amber-700 dark:text-amber-400 font-semibold flex items-center gap-1 mt-0.5">
+                          <AlertCircle className="w-3 h-3"/> Thi lại - Không tính GPA
                         </div>
                       )}
                     </div>

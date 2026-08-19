@@ -212,6 +212,7 @@ export function GpaPage() {
               key={sem.id}
               semesterId={sem.id}
               grades={sem.grades}
+              allGrades={grades}
               gpaScale={gpaScale}
               onUpdate={updateGrade}
               onDelete={deleteGrade}

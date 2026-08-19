@@ -31,6 +31,45 @@ export function getClassification(gpa4: number): string {
   return "Yếu";
 }
 
+export function isRetakePrevious(grade: Grade, allGrades: Grade[]): boolean {
+  if (!grade || !allGrades || allGrades.length <= 1) return false;
+
+  const key = (grade.code && grade.code.trim())
+    ? grade.code.trim().toUpperCase()
+    : removeAccents(grade.subject || "").trim();
+
+  if (!key) return false;
+
+  const sameSubjectGrades = allGrades.filter((g) => {
+    const gKey = (g.code && g.code.trim())
+      ? g.code.trim().toUpperCase()
+      : removeAccents(g.subject || "").trim();
+    return gKey === key;
+  });
+
+  if (sameSubjectGrades.length <= 1) return false;
+
+  const getAttemptNum = (g: Grade) => {
+    const num = parseInt(g.attempt || "1", 10);
+    return isNaN(num) ? 1 : num;
+  };
+
+  const currentAttempt = getAttemptNum(grade);
+  const maxAttempt = Math.max(...sameSubjectGrades.map(getAttemptNum));
+
+  if (currentAttempt < maxAttempt) {
+    return true;
+  }
+
+  if (currentAttempt === maxAttempt) {
+    const maxAttemptGrades = sameSubjectGrades.filter((g) => getAttemptNum(g) === maxAttempt);
+    const lastMaxGrade = maxAttemptGrades[maxAttemptGrades.length - 1];
+    return grade.stt !== lastMaxGrade.stt;
+  }
+
+  return false;
+}
+
 export function calculateGpa(grades: Grade[], scale: GradesResponseGpaScale): GpaStats {
   let totalCredits = 0;
   let total10 = 0;
@@ -38,6 +77,7 @@ export function calculateGpa(grades: Grade[], scale: GradesResponseGpaScale): Gp
 
   for (const g of grades) {
     if (isPhysicalEducation(g.subject)) continue;
+    if (isRetakePrevious(g, grades)) continue;
 
     const courseNum = parseFloat(g.course);
     if (!isNaN(courseNum) && g.letter && scale[g.letter] !== undefined) {

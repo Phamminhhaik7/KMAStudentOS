@@ -3,10 +3,11 @@ import { TableCell, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Trash2, AlertCircle } from "lucide-react";
 import type { Grade, GradesResponseGpaScale } from "@workspace/api-client-react";
-import { isPhysicalEducation } from "@/lib/utils";
+import { isPhysicalEducation, isRetakePrevious } from "@/lib/utils";
 
 interface GradeRowProps {
   grade: Grade;
+  allGrades?: Grade[];
   gpaScale: GradesResponseGpaScale;
   onUpdate: (stt: string, field: keyof Grade, value: string) => void;
   onDelete: (stt: string) => void;
@@ -74,15 +75,26 @@ const EditableCell = memo(({
   );
 });
 
-export const GradeRow = memo(({ grade, gpaScale, onUpdate, onDelete }: GradeRowProps) => {
+export const GradeRow = memo(({ grade, allGrades = [], gpaScale, onUpdate, onDelete }: GradeRowProps) => {
   const isPE = isPhysicalEducation(grade.subject);
+  const isRetakePrev = isRetakePrevious(grade, allGrades);
+  const isExcluded = isPE || isRetakePrev;
 
   return (
-    <TableRow className={`group transition-colors hover:bg-muted/30 ${isPE ? "opacity-60 grayscale-[0.5]" : ""}`}>
+    <TableRow className={`group transition-colors hover:bg-muted/30 ${isExcluded ? "opacity-60 grayscale-[0.5]" : ""}`}>
       <TableCell className="font-mono text-xs text-muted-foreground w-16">{grade.code}</TableCell>
       <TableCell className="max-w-[200px] font-medium">
         <div className="truncate text-foreground/90" title={grade.subject}>{grade.subject}</div>
-        {isPE && <div className="text-[10px] text-muted-foreground font-semibold flex items-center gap-1 mt-1 bg-muted w-fit px-1.5 py-0.5 rounded"><AlertCircle className="w-3 h-3"/> Không tính GPA</div>}
+        {isPE && (
+          <div className="text-[10px] text-muted-foreground font-semibold flex items-center gap-1 mt-1 bg-muted w-fit px-1.5 py-0.5 rounded">
+            <AlertCircle className="w-3 h-3"/> Không tính GPA
+          </div>
+        )}
+        {!isPE && isRetakePrev && (
+          <div className="text-[10px] text-amber-700 dark:text-amber-400 font-semibold flex items-center gap-1 mt-1 bg-amber-500/10 border border-amber-500/20 w-fit px-1.5 py-0.5 rounded">
+            <AlertCircle className="w-3 h-3"/> Thi lại - Không tính GPA
+          </div>
+        )}
       </TableCell>
       <TableCell className="text-center font-mono font-medium">{grade.credits}</TableCell>
       <TableCell>
