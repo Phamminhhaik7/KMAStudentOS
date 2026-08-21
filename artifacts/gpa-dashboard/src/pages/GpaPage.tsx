@@ -9,10 +9,12 @@ import { AuthDialog } from '@/components/cookie-dialog';
 import { Button } from '@/components/ui/button';
 import { Grade } from '@workspace/api-client-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, RotateCcw, BookOpen, GraduationCap, TrendingUp, School, LogIn } from 'lucide-react';
+import { Plus, RotateCcw, BookOpen, GraduationCap, TrendingUp, School, LogIn, RefreshCw, Loader2 } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
+import { useToast } from '@/hooks/use-toast';
 
 export function GpaPage() {
+  const { toast } = useToast();
   const {
     grades,
     subjects,
@@ -26,10 +28,40 @@ export function GpaPage() {
     deleteGrade,
     addPlannedSubject,
     resetEdits,
+    refetch,
   } = useGpaData();
 
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [authDialogOpen, setAuthDialogOpen] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
+
+  const handleSyncGpa = async () => {
+    setIsSyncing(true);
+    try {
+      const res = await refetch();
+      if (res.data?.isLive && res.data.grades.length > 0) {
+        toast({
+          title: 'Đồng bộ điểm thi Khảo thí thành công! 🎉',
+          description: `Đã cập nhật bảng điểm mới nhất (${res.data.grades.length} môn học).`,
+        });
+      } else {
+        toast({
+          variant: 'destructive',
+          title: 'Phiên đăng nhập Khảo thí đã hết hạn',
+          description: 'Vui lòng đăng nhập hoặc cập nhật Cookie để đồng bộ bảng điểm mới.',
+        });
+        setAuthDialogOpen(true);
+      }
+    } catch (err: any) {
+      toast({
+        variant: 'destructive',
+        title: 'Lỗi đồng bộ',
+        description: err?.message || 'Không thể kết nối đến Cổng Khảo thí.',
+      });
+    } finally {
+      setIsSyncing(false);
+    }
+  };
 
   const semesters = useMemo(() => {
     const map = new Map<string, Grade[]>();
@@ -98,8 +130,23 @@ export function GpaPage() {
           <Button
             variant="outline"
             size="sm"
+            onClick={handleSyncGpa}
+            disabled={isSyncing}
+            className="h-8.5 text-xs font-bold rounded-xl border-border hover:bg-muted/60 gap-1.5 cursor-pointer"
+          >
+            {isSyncing ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin text-brand" />
+            ) : (
+              <RefreshCw className="w-3.5 h-3.5 text-brand" />
+            )}
+            <span>Cập nhật điểm</span>
+          </Button>
+
+          <Button
+            variant="outline"
+            size="sm"
             onClick={() => setAuthDialogOpen(true)}
-            className="h-8.5 text-xs font-bold rounded-xl border-border hover:bg-muted/60 gap-1.5"
+            className="h-8.5 text-xs font-bold rounded-xl border-border hover:bg-muted/60 gap-1.5 cursor-pointer"
           >
             <School className="w-3.5 h-3.5 text-brand" />
             <span>Đăng nhập Cổng Khảo thí</span>

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -47,6 +47,22 @@ export function QldtLoginDialog({
   const [password, setPassword] = useState(savedCreds?.password || '');
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (open) {
+      try {
+        const raw = localStorage.getItem('actvn_qldt_credentials');
+        if (raw) {
+          const creds = JSON.parse(raw);
+          if (creds.username) setUsername(creds.username);
+          if (creds.password) setPassword(creds.password);
+        }
+      } catch {
+        // ignore
+      }
+      setErrorMessage(null);
+    }
+  }, [open]);
 
   const handleCredentialsSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

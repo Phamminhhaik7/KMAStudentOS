@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback, useMemo, type ReactNode } from 'react';
-import { useGetTimetable, useLoginQldt } from '@workspace/api-client-react';
+import { useGetTimetable, useLoginQldt, getTimetable } from '@workspace/api-client-react';
 import type { TimetableResponse, TimetableCourse, TimetableScheduleItem } from '@workspace/api-client-react';
 import { useQueryClient } from '@tanstack/react-query';
 
@@ -103,15 +103,27 @@ export function TimetableProvider({ children }: { children: ReactNode }) {
         });
 
         if (res.cookie) {
-          localStorage.setItem('actvn_qldt_cookie', res.cookie);
-          setCookie(res.cookie);
+          const freshCookie = res.cookie;
+          localStorage.setItem('actvn_qldt_cookie', freshCookie);
+          setCookie(freshCookie);
           const creds: QldtCredentials = { username, password };
           setSavedCreds(creds);
           localStorage.setItem('actvn_qldt_credentials', JSON.stringify(creds));
-          queryClient.invalidateQueries();
-          setTimeout(() => {
-            refetch();
-          }, 50);
+
+          try {
+            const liveData = await getTimetable(queryParams, {
+              headers: { 'X-Qldt-Cookie': freshCookie },
+            });
+            if (liveData?.courses && liveData.courses.length > 0) {
+              setCachedTimetable(liveData);
+              localStorage.setItem('actvn_cached_timetable', JSON.stringify(liveData));
+            }
+            queryClient.setQueryData(['/timetable', freshCookie, selectedSemester], liveData);
+          } catch {
+            // Ignore immediate fetch error
+          }
+
+          queryClient.invalidateQueries({ queryKey: ['/timetable'] });
           return { success: true };
         }
         return { success: false, error: 'Không nhận được phiên đăng nhập hợp lệ.' };
@@ -120,7 +132,7 @@ export function TimetableProvider({ children }: { children: ReactNode }) {
         return { success: false, error: message };
       }
     },
-    [loginMutation, queryClient, refetch]
+    [loginMutation, queryClient, queryParams, selectedSemester]
   );
 
   const saveCookieDirectly = useCallback((newCookie: string) => {
@@ -150,27 +162,89 @@ export function TimetableProvider({ children }: { children: ReactNode }) {
     error?: string;
   }> => {
     try {
-      const result = await refetch();
-      if (result.data?.isLive && result.data.courses.length > 0) {
-        return { success: true, reauthenticated: false, requireLogin: false };
-      }
-
-      // If session expired and credentials saved, auto-relogin
-      if (savedCreds?.username && savedCreds?.password) {
-        const reLoginRes = await handleLogin(savedCreds.username, savedCreds.password);
-        if (reLoginRes.success) {
-          const secondResult = await refetch();
-          if (secondResult.data?.isLive) {
-            return { success: true, reauthenticated: true, requireLogin: false };
+      // 1. Try with current cookie first
+      const currentCookie = localStorage.getItem('actvn_qldt_cookie') || cookie;
+      if (currentCookie) {
+        try {
+          const checkRes = await getTimetable(queryParams, {
+            headers: { 'X-Qldt-Cookie': currentCookie },
+          });
+          if (checkRes?.isLive && checkRes.courses && checkRes.courses.length > 0) {
+            setCachedTimetable(checkRes);
+            localStorage.setItem('actvn_cached_timetable', JSON.stringify(checkRes));
+            queryClient.setQueryData(['/timetable', currentCookie, selectedSemester], checkRes);
+            queryClient.invalidateQueries({ queryKey: ['/timetable'] });
+            return { success: true, reauthenticated: false, requireLogin: false };
           }
+        } catch {
+          // Current cookie failed/expired, proceed to auto-login
         }
       }
 
+      // 2. Read saved credentials from localStorage
+      const rawCreds = localStorage.getItem('actvn_qldt_credentials');
+      let creds: QldtCredentials | null = null;
+      if (rawCreds) {
+        try {
+          creds = JSON.parse(rawCreds);
+        } catch {
+          creds = null;
+        }
+      }
+
+      // 3. If credentials exist, perform auto-login seamlessly
+      if (creds?.username && creds?.password) {
+        try {
+          const res = await loginMutation.mutateAsync({
+            data: { username: creds.username, password: creds.password },
+          });
+
+          if (res.cookie) {
+            const freshCookie = res.cookie;
+            localStorage.setItem('actvn_qldt_cookie', freshCookie);
+            setCookie(freshCookie);
+            setSavedCreds(creds);
+
+            const liveData = await getTimetable(queryParams, {
+              headers: { 'X-Qldt-Cookie': freshCookie },
+            });
+
+            if (liveData?.courses) {
+              setCachedTimetable(liveData);
+              localStorage.setItem('actvn_cached_timetable', JSON.stringify(liveData));
+            }
+            queryClient.setQueryData(['/timetable', freshCookie, selectedSemester], liveData);
+            queryClient.invalidateQueries({ queryKey: ['/timetable'] });
+
+            return { success: true, reauthenticated: true, requireLogin: false };
+          } else {
+            return {
+              success: false,
+              reauthenticated: false,
+              requireLogin: true,
+              error: 'Không nhận được phiên đăng nhập hợp lệ từ Cổng QLĐT.',
+            };
+          }
+        } catch (loginErr: any) {
+          const errMsg =
+            loginErr?.response?.data?.error ||
+            loginErr?.message ||
+            'Tài khoản hoặc mật khẩu đã lưu không còn đúng. Vui lòng đăng nhập lại.';
+          return {
+            success: false,
+            reauthenticated: false,
+            requireLogin: true,
+            error: errMsg,
+          };
+        }
+      }
+
+      // 4. No saved credentials
       return {
         success: false,
         reauthenticated: false,
         requireLogin: true,
-        error: 'Phiên đăng nhập QLĐT đã hết hạn. Vui lòng đăng nhập lại.',
+        error: 'Chưa có thông tin đăng nhập QLĐT đã lưu. Vui lòng đăng nhập.',
       };
     } catch (err: any) {
       return {
@@ -180,7 +254,7 @@ export function TimetableProvider({ children }: { children: ReactNode }) {
         error: err?.message || 'Không thể kết nối đến Cổng QLĐT.',
       };
     }
-  }, [refetch, savedCreds, handleLogin]);
+  }, [cookie, queryParams, selectedSemester, loginMutation, queryClient]);
 
   // Active timetable data (live -> cached -> null)
   const activeTimetable = useMemo(() => {

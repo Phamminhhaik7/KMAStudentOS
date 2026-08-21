@@ -1,4 +1,5 @@
 import { useState, ReactNode } from 'react';
+import { useLocation } from 'wouter';
 import { AppSidebar } from './AppSidebar';
 import { AppHeader } from './AppHeader';
 import { MobileBottomNav } from './MobileBottomNav';
@@ -17,6 +18,7 @@ interface AppLayoutProps {
 }
 
 export function AppLayout({ children }: AppLayoutProps) {
+  const [location] = useLocation();
   const { toast } = useToast();
   const {
     userInfo,
@@ -55,14 +57,71 @@ export function AppLayout({ children }: AppLayoutProps) {
   const handleGlobalSync = async () => {
     setIsSyncing(true);
     try {
+      // 1. If currently on GPA page (/gpa)
+      if (location === '/gpa') {
+        const gpaRes = await refetchGpa();
+        if (gpaRes.data?.isLive && gpaRes.data.grades.length > 0) {
+          toast({
+            title: 'Đồng bộ điểm thi Khảo thí thành công! 🎉',
+            description: `Đã cập nhật bảng điểm mới nhất (${gpaRes.data.grades.length} môn học).`,
+          });
+        } else {
+          toast({
+            variant: 'destructive',
+            title: 'Phiên đăng nhập Khảo thí đã hết hạn',
+            description: 'Vui lòng đăng nhập hoặc cập nhật Cookie để đồng bộ bảng điểm mới.',
+          });
+          setGpaAuthOpen(true);
+        }
+        return;
+      }
+
+      // 2. If currently on Schedule page (/schedule)
+      if (location.startsWith('/schedule')) {
+        const timetableRes = await syncTimetable();
+        if (timetableRes.success) {
+          toast({
+            title: 'Đồng bộ thời khóa biểu thành công! 🎉',
+            description: timetableRes.reauthenticated
+              ? 'Đã tự động đăng nhập lại bằng tài khoản đã lưu và cập nhật lịch học mới nhất.'
+              : 'Thời khóa biểu của bạn đã được cập nhật mới nhất từ Cổng QLĐT.',
+          });
+        } else if (timetableRes.requireLogin) {
+          toast({
+            variant: 'destructive',
+            title: 'Phiên đăng nhập QLĐT đã hết hạn',
+            description: timetableRes.error || 'Tài khoản hoặc mật khẩu đã lưu không chính xác. Vui lòng đăng nhập lại.',
+          });
+          setQldtAuthOpen(true);
+        } else {
+          toast({
+            variant: 'destructive',
+            title: 'Lỗi đồng bộ',
+            description: timetableRes.error || 'Không thể kết nối đến Cổng QLĐT.',
+          });
+        }
+        return;
+      }
+
+      // 3. For other pages (Dashboard, Settings, etc.): Sync both
       const gpaPromise = refetchGpa();
       const timetablePromise = syncTimetable();
       const [gpaRes, timetableRes] = await Promise.all([gpaPromise, timetablePromise]);
 
-      if (timetableRes.success || gpaRes.data?.isLive) {
+      if (timetableRes.success && gpaRes.data?.isLive) {
         toast({
           title: 'Đồng bộ toàn bộ thành công! 🎉',
           description: 'Thời khóa biểu và bảng điểm KMA đã được làm mới.',
+        });
+      } else if (timetableRes.success) {
+        toast({
+          title: 'Đồng bộ lịch học thành công! 🎉',
+          description: 'Lịch học đã được cập nhật. Cổng Khảo thí chưa kết nối.',
+        });
+      } else if (gpaRes.data?.isLive) {
+        toast({
+          title: 'Đồng bộ điểm thi thành công! 🎉',
+          description: 'Bảng điểm đã được cập nhật. Cổng QLĐT chưa kết nối.',
         });
       } else {
         toast({
@@ -70,7 +129,11 @@ export function AppLayout({ children }: AppLayoutProps) {
           title: 'Phiên đăng nhập hết hạn',
           description: 'Vui lòng đăng nhập lại để cập nhật dữ liệu trực tuyến.',
         });
-        setQldtAuthOpen(true);
+        if (timetableRes.requireLogin) {
+          setQldtAuthOpen(true);
+        } else {
+          setGpaAuthOpen(true);
+        }
       }
     } catch (err: any) {
       toast({

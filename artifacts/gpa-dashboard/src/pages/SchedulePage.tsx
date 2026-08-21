@@ -25,6 +25,7 @@ import {
   Calendar as CalendarIcon,
   MapPin,
   BookOpen,
+  RefreshCw,
 } from 'lucide-react';
 import {
   generateAllCalendarEvents,
@@ -106,9 +107,15 @@ export function SchedulePage() {
         toast({
           variant: 'destructive',
           title: 'Phiên đăng nhập QLĐT đã hết hạn',
-          description: 'Vui lòng đăng nhập để hệ thống lưu tài khoản và tự động đồng bộ.',
+          description: res.error || 'Tài khoản hoặc mật khẩu đã lưu không chính xác. Vui lòng đăng nhập lại.',
         });
         setLoginDialogOpen(true);
+      } else {
+        toast({
+          variant: 'destructive',
+          title: 'Lỗi đồng bộ',
+          description: res.error || 'Không thể kết nối đến Cổng QLĐT.',
+        });
       }
     } catch (err: any) {
       toast({
@@ -308,6 +315,33 @@ export function SchedulePage() {
           <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
             Thời khóa biểu các học phần đăng ký tại Cổng Đào tạo QLĐT ACTVN
           </p>
+        </div>
+
+        <div className="flex items-center gap-2 sm:gap-2.5 flex-wrap">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleSyncSchedule}
+            disabled={isSyncing}
+            className="h-8.5 text-xs font-bold rounded-xl border-border hover:bg-muted/60 gap-1.5 cursor-pointer"
+          >
+            {isSyncing ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin text-primary" />
+            ) : (
+              <RefreshCw className="w-3.5 h-3.5 text-primary" />
+            )}
+            <span>Cập nhật lịch</span>
+          </Button>
+
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setLoginDialogOpen(true)}
+            className="h-8.5 text-xs font-bold rounded-xl border-border hover:bg-muted/60 gap-1.5 cursor-pointer"
+          >
+            <School className="w-3.5 h-3.5 text-primary" />
+            <span>Đăng nhập Cổng QLĐT</span>
+          </Button>
         </div>
       </div>
         {/* Banner: Hôm nay ngày bao nhiêu & Hôm nay học ở đâu (Loket Compact & High Impact) */}
