@@ -139,10 +139,24 @@ export function parseTimetableHtml(html: string): ParsedTimetable {
   let studentMajor = "";
 
   if (studentHeader) {
-    const parts = studentHeader.split("-").map(p => p.trim());
-    if (parts.length >= 1) studentId = parts[0];
-    if (parts.length >= 2) studentName = parts[1];
-    if (parts.length >= 3) studentMajor = parts.slice(2).join(" - ");
+    const parts = studentHeader.split("-").map((p) => p.trim()).filter(Boolean);
+    for (const part of parts) {
+      if (!studentId && /^[ACD]T\d{6,8}$/i.test(part)) {
+        studentId = part.toUpperCase();
+      } else if (!studentMajor && /(?:ngành|chuyên ngành|khoa)/i.test(part)) {
+        studentMajor = part;
+      } else if (
+        !studentName &&
+        /[a-zA-ZÀ-ỹ]/.test(part) &&
+        !/^[ACD]T\d{1,3}[A-Za-z]?$/i.test(part)
+      ) {
+        studentName = part;
+      }
+    }
+    // Fallback if not matched by patterns
+    if (!studentId && parts.length >= 1) studentId = parts[0];
+    if (!studentName && parts.length >= 2) studentName = parts[1];
+    if (!studentMajor && parts.length >= 3) studentMajor = parts.slice(2).join(" - ");
   }
 
   // Semester info: #lblSemester => "Học kỳ 1 Năm học 2026_2027 Đợt học 1"

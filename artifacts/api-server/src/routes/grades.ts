@@ -2,16 +2,26 @@ import { Router, type IRouter, type Request, type Response as ExpressResponse } 
 import { GetGradesResponse } from "@workspace/api-zod";
 import { GPA_SCALE } from "../lib/gpa-data";
 import { SAMPLE_GRADES, SAMPLE_SUBJECTS_CATALOG } from "../lib/sample-data";
-import { parsePortalHtml, parsePortalUserInfo } from "../lib/parse-portal-html";
+import {
+  parsePortalHtml,
+  parsePortalUserInfo,
+  isBadStudentName,
+  isBadStudentId,
+} from "../lib/parse-portal-html";
 
 const router: IRouter = Router();
 
-const GRADES_URL = "https://ktdbcl.actvn.edu.vn/khao-thi/hvsv/xem-diem-thi.html";
-const USER_INFO_URL = "https://ktdbcl.actvn.edu.vn/khao-thi/hvsv/thong-tin-tai-khoan.html";
+// New endpoints of KTDBCL ACTVN portal
+const GRADES_URL = "https://ktdbcl.actvn.edu.vn/hvsv.html?view=learnerexams";
+const USER_INFO_URL = "https://ktdbcl.actvn.edu.vn/hvsv.html";
+
 const DEFAULT_USER_AGENT =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36";
-const FETCH_TIMEOUT_MS = 8000;
-const SESSION_ID_PATTERN = /^[a-zA-Z0-9]{26}$/;
+const FETCH_TIMEOUT_MS = 10000;
+
+// Current and legacy Joomla session cookie names for ktdbcl.actvn.edu.vn
+const CURRENT_COOKIE_NAME = "23782a59952067715128532cfcd568f5";
+const LEGACY_COOKIE_NAME = "cc70e48ec639b3a206b5458ea23dbecb";
 
 function buildCookieHeader(rawCookie: string | undefined): string {
   const fallback = "joomla_user_state=logged_in";
@@ -22,8 +32,9 @@ function buildCookieHeader(rawCookie: string | undefined): string {
     cookie = cookie.slice("cookie:".length).trim();
   }
 
-  if (SESSION_ID_PATTERN.test(cookie)) {
-    return `joomla_user_state=logged_in; cc70e48ec639b3a206b5458ea23dbecb=${cookie}`;
+  // Bare session ID (typically 26-32 alphanumeric characters)
+  if (/^[a-zA-Z0-9]{24,36}$/.test(cookie)) {
+    return `joomla_user_state=logged_in; ${CURRENT_COOKIE_NAME}=${cookie}; ${LEGACY_COOKIE_NAME}=${cookie}`;
   }
 
   // Already a full "key=value; key2=value2" cookie string.
@@ -54,9 +65,9 @@ router.get("/grades", async (req: Request, res: ExpressResponse): Promise<void> 
 
   const headers: Record<string, string> = {
     accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-    "accept-language": "en-US,en;q=0.9,vi;q=0.8",
+    "accept-language": "vi,en-US;q=0.9,en;q=0.8",
     cookie: buildCookieHeader(customCookie),
-    referer: "https://ktdbcl.actvn.edu.vn/home/gioi-thieu.html",
+    referer: "https://ktdbcl.actvn.edu.vn/hvsv.html",
     "user-agent": customUserAgent || DEFAULT_USER_AGENT,
   };
 
@@ -73,15 +84,21 @@ router.get("/grades", async (req: Request, res: ExpressResponse): Promise<void> 
 
     if (userInfoRes?.ok) {
       try {
-        userInfo = parsePortalUserInfo(await userInfoRes.text());
+        const infoHtml = await userInfoRes.text();
+        userInfo = parsePortalUserInfo(infoHtml);
       } catch (err) {
-        req.log.warn({ err }, "Failed to parse portal user info");
+        req.log?.warn?.({ err }, "Failed to parse portal user info");
       }
     }
 
     if (gradesRes?.ok) {
       const html = await gradesRes.text();
-      if (html.includes("Danh sách môn thi của thí sinh")) {
+      // Ensure the student was identified and grades are accessible
+      if (
+        html.includes("Danh sách môn thi của thí sinh") &&
+        !html.includes("Không xác định được thí sinh") &&
+        !html.includes("Hãy đăng nhập")
+      ) {
         try {
           const parsed = parsePortalHtml(html);
           if (parsed.grades.length > 0) {
@@ -90,11 +107,41 @@ router.get("/grades", async (req: Request, res: ExpressResponse): Promise<void> 
             isLive = true;
           }
         } catch (err) {
-          req.log.error({ err }, "Failed to parse live portal grades HTML");
+          req.log?.error?.({ err }, "Failed to parse live portal grades HTML");
+        }
+
+        // Also extract or refine userInfo from the grades page HTML
+        try {
+          const userFromGrades = parsePortalUserInfo(html);
+          if (userFromGrades) {
+            if (!userInfo) {
+              userInfo = userFromGrades;
+            } else {
+              if (
+                (!userInfo.name || isBadStudentName(userInfo.name)) &&
+                userFromGrades.name &&
+                !isBadStudentName(userFromGrades.name)
+              ) {
+                userInfo.name = userFromGrades.name;
+              }
+              if (
+                (!userInfo.id || isBadStudentId(userInfo.id)) &&
+                userFromGrades.id &&
+                !isBadStudentId(userFromGrades.id)
+              ) {
+                userInfo.id = userFromGrades.id;
+              }
+              if (!userInfo.email && userFromGrades.email) {
+                userInfo.email = userFromGrades.email;
+              }
+            }
+          }
+        } catch (err) {
+          req.log?.warn?.({ err }, "Failed to refine user info from grades HTML");
         }
       }
     } else {
-      req.log.info(
+      req.log?.info?.(
         { status: gradesRes?.status },
         "Live portal grades fetch did not succeed, falling back to sample data",
       );

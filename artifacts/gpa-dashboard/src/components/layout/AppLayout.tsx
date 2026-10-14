@@ -50,8 +50,17 @@ export function AppLayout({ children }: AppLayoutProps) {
   const [qldtAuthOpen, setQldtAuthOpen] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
 
-  const studentName = userInfo?.name || timetable?.studentName;
-  const studentId = userInfo?.id || timetable?.studentId;
+  const isClassCode = (val?: string | null) =>
+    !val || /^[ACD]T\d{1,3}[A-Za-z]?$/i.test(val.trim());
+
+  const studentName =
+    (!isClassCode(userInfo?.name) ? userInfo?.name : undefined) ||
+    timetable?.studentName ||
+    userInfo?.name;
+  const studentId =
+    (!isClassCode(userInfo?.id) ? userInfo?.id : undefined) ||
+    timetable?.studentId ||
+    userInfo?.id;
   const isLive = isGpaLive || timetable?.isLive;
 
   const handleGlobalSync = async () => {

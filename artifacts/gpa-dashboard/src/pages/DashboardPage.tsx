@@ -42,7 +42,14 @@ export function DashboardPage() {
   const { exams } = useExams();
   const { progressStats } = useCurriculum();
 
-  const studentName = userInfo?.name || timetable?.studentName || 'CHƯA ĐĂNG NHẬP';
+  const isClassCode = (val?: string | null) =>
+    !val || /^[ACD]T\d{1,3}[A-Za-z]?$/i.test(val.trim());
+
+  const studentName =
+    (!isClassCode(userInfo?.name) ? userInfo?.name : undefined) ||
+    timetable?.studentName ||
+    userInfo?.name ||
+    'CHƯA ĐĂNG NHẬP';
   const todayKey = useMemo(() => formatDateKey(new Date()), []);
 
   // GPA Stats

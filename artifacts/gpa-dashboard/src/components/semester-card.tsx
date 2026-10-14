@@ -43,7 +43,14 @@ export const SemesterCard = memo(({ semesterId, grades, allGrades = [], gpaScale
                 <span className="text-base leading-none mt-0.5">{term}</span>
               </div>
               <div>
-                <h3 className="font-extrabold text-base sm:text-lg text-foreground tracking-tight">Học kỳ {term}</h3>
+                <div className="flex items-center gap-2">
+                  <h3 className="font-extrabold text-base sm:text-lg text-foreground tracking-tight">Học kỳ {term}</h3>
+                  {plannedCount > 0 && (
+                    <Badge variant="secondary" className="text-[10.5px] font-semibold px-2 py-0.5 bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
+                      {plannedCount} môn đang học
+                    </Badge>
+                  )}
+                </div>
                 <p className="text-xs text-muted-foreground font-mono font-medium">Năm học {year}</p>
               </div>
             </div>
@@ -56,11 +63,11 @@ export const SemesterCard = memo(({ semesterId, grades, allGrades = [], gpaScale
                 </div>
                 <div className="text-left">
                   <p className="text-muted-foreground text-[10px] uppercase font-bold tracking-wider mb-0.5">Hệ 10</p>
-                  <p className="font-mono font-extrabold text-sm sm:text-base text-foreground">{stats.gpa10.toFixed(2)}</p>
+                  <p className="font-mono font-extrabold text-sm sm:text-base text-foreground">{stats.credits > 0 ? stats.gpa10.toFixed(2) : "-"}</p>
                 </div>
                 <div className="text-left">
                   <p className="text-muted-foreground text-[10px] uppercase font-bold tracking-wider mb-0.5">Hệ 4</p>
-                  <p className="font-mono font-black text-primary text-base sm:text-lg leading-none">{stats.gpa4.toFixed(2)}</p>
+                  <p className="font-mono font-black text-primary text-base sm:text-lg leading-none">{stats.credits > 0 ? stats.gpa4.toFixed(2) : "-"}</p>
                 </div>
               </div>
               <Button variant="ghost" size="icon" className="h-8.5 w-8.5 text-muted-foreground hover:bg-muted/70 shrink-0 rounded-lg">
@@ -71,6 +78,13 @@ export const SemesterCard = memo(({ semesterId, grades, allGrades = [], gpaScale
         </CollapsibleTrigger>
         
         <CollapsibleContent>
+          {plannedCount > 0 && (
+            <div className="px-4 py-2 bg-blue-500/10 border-b border-blue-500/20 text-xs text-blue-700 dark:text-blue-300 flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 shrink-0 text-blue-600 dark:text-blue-400" />
+              <span>Các môn học từ Thời khóa biểu đang diễn ra (chưa có điểm thi). Bạn có thể bấm vào ô điểm bất kỳ để nhập điểm dự kiến và xem GPA mô phỏng.</span>
+            </div>
+          )}
+
           {/* Desktop Table View (sm+) */}
           <div className="hidden sm:block overflow-x-auto p-0">
             <Table>

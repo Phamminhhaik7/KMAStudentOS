@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useEffect, useCallback, useMemo, t
 import { useGetTimetable, useLoginQldt, getTimetable } from '@workspace/api-client-react';
 import type { TimetableResponse, TimetableCourse, TimetableScheduleItem } from '@workspace/api-client-react';
 import { useQueryClient } from '@tanstack/react-query';
+import { useGpaData } from './use-gpa-data';
 
 export interface DayLessonSlot {
   course: TimetableCourse;
@@ -84,6 +85,8 @@ export function TimetableProvider({ children }: { children: ReactNode }) {
     }
   );
 
+  const { importSubjectsFromTimetable } = useGpaData();
+
   // When live timetable data with courses arrives, persist to localStorage
   useEffect(() => {
     if (data && data.courses && data.courses.length > 0) {
@@ -91,6 +94,21 @@ export function TimetableProvider({ children }: { children: ReactNode }) {
       localStorage.setItem('actvn_cached_timetable', JSON.stringify(data));
     }
   }, [data]);
+
+  // Auto-sync timetable courses into planned subjects in GPA data
+  useEffect(() => {
+    const currentTimetable = data || cachedTimetable;
+    if (currentTimetable?.courses && currentTimetable.courses.length > 0) {
+      const year = currentTimetable.semesterYear || '2024-2025';
+      const term = currentTimetable.semesterTerm || '1';
+      const coursesToImport = currentTimetable.courses.map((c) => ({
+        subjectName: c.subjectName,
+        courseCode: c.courseCode,
+        credits: c.credits,
+      }));
+      importSubjectsFromTimetable(coursesToImport, year, term);
+    }
+  }, [data, cachedTimetable, importSubjectsFromTimetable]);
 
   const loginMutation = useLoginQldt();
 

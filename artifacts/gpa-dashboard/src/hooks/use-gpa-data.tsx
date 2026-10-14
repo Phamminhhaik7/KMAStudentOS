@@ -266,23 +266,28 @@ export function GpaProvider({ children }: { children: ReactNode }) {
         const existing = [...baseGrades, ...prev];
         const newItems: Grade[] = [];
 
-        courses.forEach((c, idx) => {
-          const alreadyExists = existing.some(
-            (g) =>
-              g.year === year &&
-              g.term === term &&
-              ((g.code && c.courseCode && g.code.trim().toLowerCase() === c.courseCode.trim().toLowerCase()) ||
-                (g.subject && c.subjectName && g.subject.trim().toLowerCase() === c.subjectName.trim().toLowerCase()))
-          );
+      const normYear = (y: string) => (y || '').replace(/_/g, '-').trim();
+      const normTerm = (t: string) => (t || '').trim();
+      const targetYear = normYear(year);
+      const targetTerm = normTerm(term);
 
-          if (!alreadyExists) {
-            newItems.push({
-              stt: `planned_import_${Date.now()}_${idx}`,
-              year,
-              term,
-              subject: c.subjectName,
-              code: c.courseCode,
-              credits: c.credits,
+      courses.forEach((c, idx) => {
+        const alreadyExists = existing.some(
+          (g) =>
+            normYear(g.year) === targetYear &&
+            normTerm(g.term) === targetTerm &&
+            ((g.code && c.courseCode && g.code.trim().toLowerCase() === c.courseCode.trim().toLowerCase()) ||
+              (g.subject && c.subjectName && g.subject.trim().toLowerCase() === c.subjectName.trim().toLowerCase()))
+        );
+
+        if (!alreadyExists) {
+          newItems.push({
+            stt: `planned_import_${Date.now()}_${idx}`,
+            year: targetYear,
+            term: targetTerm,
+            subject: c.subjectName,
+            code: c.courseCode,
+            credits: c.credits,
               attempt: '1',
               tp1: '-',
               tp2: '-',
@@ -294,6 +299,10 @@ export function GpaProvider({ children }: { children: ReactNode }) {
             count++;
           }
         });
+
+        if (newItems.length === 0) {
+          return prev;
+        }
 
         return [...prev, ...newItems];
       });

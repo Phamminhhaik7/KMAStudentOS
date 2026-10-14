@@ -11,7 +11,7 @@ export function AuthDialog({
   onSave,
   onClear,
   hasCookie,
-  isLive
+  isLive,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -28,7 +28,7 @@ export function AuthDialog({
   const handleLoginClick = () => {
     window.open(
       'https://login.microsoftonline.com/0aa16d8a-a396-4e21-aa14-2a68a45786bc/oauth2/v2.0/authorize?response_type=code&client_id=fbad147e-ffd3-419f-989a-7aceae620f77&redirect_uri=https%3A%2F%2Fktdbcl.actvn.edu.vn%2Findex.php%2Faksociallogin_finishLogin%2Fmicrosoft.raw&scope=user.read&response_mode=fragment',
-      '_blank'
+      '_blank',
     );
   };
 
@@ -36,20 +36,24 @@ export function AuthDialog({
     setError('');
     const trimmed = urlInput.trim();
     if (!trimmed) {
-      setError("Vui lòng dán liên kết (URL) sau khi đăng nhập.");
+      setError('Vui lòng dán liên kết (URL) sau khi đăng nhập Microsoft.');
       return;
     }
 
-    exchangeCode.mutate({ data: { redirectUrl: trimmed } }, {
-      onSuccess: (res) => {
-        onSave(res.cookie, "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0.0.0 Safari/537.36");
-        setUrlInput('');
-        onOpenChange(false);
+    exchangeCode.mutate(
+      { data: { redirectUrl: trimmed } },
+      {
+        onSuccess: (res) => {
+          onSave(res.cookie, navigator.userAgent);
+          setUrlInput('');
+          setError('');
+          onOpenChange(false);
+        },
+        onError: (err: any) => {
+          setError(err?.error || 'Không thể đồng bộ. Vui lòng kiểm tra lại liên kết hoặc thử lại.');
+        },
       },
-      onError: (err: any) => {
-        setError(err?.error || "Không thể đồng bộ. Vui lòng kiểm tra lại liên kết hoặc thử lại.");
-      }
-    });
+    );
   };
 
   return (
@@ -57,7 +61,7 @@ export function AuthDialog({
       <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto p-0 rounded-2xl bg-card border border-border shadow-xl">
         <div className="bg-muted/40 px-6 py-5 border-b border-border/80">
           <DialogTitle className="text-lg font-extrabold flex items-center gap-2.5 text-foreground">
-            <ShieldCheck className="w-5 h-5 text-brand" />
+            <ShieldCheck className="w-5 h-5 text-primary" />
             Đăng nhập Cổng Khảo Thí (Điểm số)
           </DialogTitle>
           <DialogDescription className="pt-1.5 text-muted-foreground text-xs sm:text-sm leading-relaxed">
@@ -79,7 +83,7 @@ export function AuthDialog({
                 variant="outline"
                 size="sm"
                 onClick={onClear}
-                className="text-xs h-7.5 text-destructive border-destructive/30 hover:bg-destructive/10 rounded-lg font-bold"
+                className="text-xs h-7.5 text-destructive border-destructive/30 hover:bg-destructive/10 rounded-lg font-bold cursor-pointer"
               >
                 <LogOut className="w-3 h-3 mr-1" />
                 Đăng xuất
@@ -98,10 +102,17 @@ export function AuthDialog({
                   Đăng nhập tài khoản Microsoft trường cấp (@actvn.edu.vn)
                 </p>
                 <Button
+                  type="button"
                   onClick={handleLoginClick}
                   size="sm"
-                  className="bg-[#0078D4] hover:bg-[#006CBE] text-white font-bold text-xs h-8.5 rounded-xl shadow-xs cursor-pointer"
+                  className="bg-[#0078D4] hover:bg-[#006CBE] text-white font-bold text-xs h-8.5 rounded-xl shadow-xs cursor-pointer flex items-center gap-1.5"
                 >
+                  <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 23 23">
+                    <path fill="#f35325" d="M1 1h10v10H1z"/>
+                    <path fill="#81bc06" d="M12 1h10v10H12z"/>
+                    <path fill="#05a6f0" d="M1 12h10v10H1z"/>
+                    <path fill="#ffba08" d="M12 12h10v10H12z"/>
+                  </svg>
                   Đăng nhập Microsoft Online
                 </Button>
               </div>
@@ -121,11 +132,15 @@ export function AuthDialog({
                 </p>
                 <Input
                   value={urlInput}
-                  onChange={(e) => { setUrlInput(e.target.value); setError(''); }}
+                  onChange={(e) => {
+                    setUrlInput(e.target.value);
+                    setError('');
+                  }}
                   placeholder="https://ktdbcl.actvn.edu.vn/#code=..."
                   className="font-mono text-xs mb-2.5 shadow-2xs h-9 rounded-lg"
                 />
                 <Button
+                  type="button"
                   onClick={handleMicrosoftSubmit}
                   disabled={!urlInput.trim() || exchangeCode.isPending}
                   size="sm"

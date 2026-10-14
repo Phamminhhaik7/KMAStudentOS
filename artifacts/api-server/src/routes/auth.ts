@@ -1,5 +1,6 @@
 import { Router, type IRouter, type Request, type Response as ExpressResponse } from "express";
 import { ExchangeMicrosoftCodeBody, ExchangeMicrosoftCodeResponse } from "@workspace/api-zod";
+import { loginKtdbcl } from "../lib/ktdbcl-client";
 
 const router: IRouter = Router();
 
@@ -32,9 +33,7 @@ function extractCode(redirectUrl: string): string | null {
  * Merges the portal's Set-Cookie headers, keeping the LAST value for any
  * duplicate cookie name. This is required because Joomla's aksociallogin
  * plugin creates a throw-away session, destroys it, then creates the real
- * one — emitting two Set-Cookie headers with the same name. Naively joining
- * them (first value wins in most cookie jars) sends the dead session and
- * the portal reports the visitor as not logged in.
+ * one — emitting two Set-Cookie headers with the same name.
  */
 function resolveSetCookies(setCookieHeaders: string[]): string {
   const cookieMap = new Map<string, string>();
@@ -49,11 +48,49 @@ function resolveSetCookies(setCookieHeaders: string[]): string {
     if (key) cookieMap.set(key, value);
   }
 
+  if (!cookieMap.has("joomla_user_state")) {
+    cookieMap.set("joomla_user_state", "logged_in");
+  }
+
   return Array.from(cookieMap.entries())
     .map(([key, value]) => `${key}=${value}`)
     .join("; ");
 }
 
+/**
+ * Direct login with student username & password on ktdbcl.actvn.edu.vn
+ */
+router.post("/auth/ktdbcl-login", async (req: Request, res: ExpressResponse): Promise<void> => {
+  try {
+    const { username, password } = req.body || {};
+    if (!username || !password) {
+      res.status(400).json({ error: "Vui lòng nhập đầy đủ Mã sinh viên và Mật khẩu." });
+      return;
+    }
+
+    const result = await loginKtdbcl(String(username), String(password));
+    if (!result.success || !result.cookie) {
+      res.status(401).json({
+        error: result.errorMessage || "Đăng nhập không thành công. Vui lòng kiểm tra lại thông tin.",
+      });
+      return;
+    }
+
+    res.json({
+      cookie: result.cookie,
+      studentInfo: result.studentInfo,
+      studentId: result.studentId,
+      studentName: result.studentName,
+    });
+  } catch (err: any) {
+    req.log?.error?.({ err }, "Failed to login to KTDBCL");
+    res.status(500).json({ error: "Lỗi hệ thống khi đăng nhập Cổng Khảo thí." });
+  }
+});
+
+/**
+ * Microsoft Edu OAuth code exchange
+ */
 router.post(
   "/auth/microsoft-exchange",
   async (req: Request, res: ExpressResponse): Promise<void> => {
